@@ -1,0 +1,27 @@
+set(CPACK_VERBATIM_VARIABLES YES)
+set(CPACK_PACKAGE_VERSION_MAJOR @PROJECT_VERSION_MAJOR@)
+set(CPACK_PACKAGE_VERSION_MINOR @PROJECT_VERSION_MINOR@)
+set(CPACK_PACKAGE_VERSION_PATCH @PROJECT_VERSION_PATCH@)
+set(CPACK_PACKAGE_VENDOR "Kruzhok Association")
+set(CPACK_PACKAGE_CONTACT "aleksey@fedoseev.net")
+set(CPACK_RESOURCE_FILE_LICENSE "@PROJECT_SOURCE_DIR@/LICENSE")
+set(CPACK_RESOURCE_FILE_README "@PROJECT_SOURCE_DIR@/README.md")
+
+# the pure Python package, the command and the plugin of the editor
+set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "all")
+set(CPACK_DEBIAN_PACKAGE_NAME "python3-cybersphere-git")
+set(CPACK_DEBIAN_PACKAGE_SECTION "python")
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "The git plugin of the CyberiadaPro state machine editor
+Stages and unstages the open diagram, commits the index after showing the
+branch and the staged files, and prints what changed in the diagram since a
+revision, state by state and transition by transition. The command hsm-git
+and the package hsm_git.")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "python3 (>= 3.8), git, python3-libcyberiadamlpp (>= 1.2.0)")
+set(CPACK_DEBIAN_PACKAGE_ENHANCES "cyberiada-pro")
+
+# a per-release build tags the version (e.g. 0.1.0+ubuntu2404)
+set(DISTRO_TAG "@DISTRO_TAG@")
+if(NOT DISTRO_TAG STREQUAL "")
+  set(CPACK_DEBIAN_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}+${DISTRO_TAG}")
+endif()

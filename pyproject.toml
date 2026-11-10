@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cybersphere-git-plugin"
+version = "0.1.0"
+description = "The git plugin of CyberiadaPro: stage, unstage, commit and the diff of a diagram"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{name = "Alexey Fedoseev", email = "aleksey@fedoseev.net"}]
+classifiers = [
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "Programming Language :: Python :: 3",
+]
+
+# the diff needs the CyberiadaML module with Document.diff: the binding of
+# libcyberiadamlpp-py 1.2 (its own build or package), not on PyPI
+dependencies = []
+
+[project.scripts]
+hsm-git = "hsm_git.cli:main"
+
+[tool.setuptools]
+packages = ["hsm_git"]
+
+# the editor plugin under the install prefix; hsm-git --install-editor-plugin
+# copies it into the plugin folder of the editor
+[tool.setuptools.data-files]
+"share/cyberiada-pro/plugins/git" = ["editor-plugin/plugin.json"]
+"share/cyberiada-pro/plugins/git/i18n" = ["editor-plugin/i18n/ru.json"]
+"share/cyberiada-pro/plugins/git/icons" = [
+    "editor-plugin/icons/git.svg", "editor-plugin/icons/stage.svg",
+    "editor-plugin/icons/commit.svg", "editor-plugin/icons/diff.svg"]

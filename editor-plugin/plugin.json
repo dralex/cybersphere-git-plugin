@@ -1,0 +1,46 @@
+{
+  "api": 1,
+  "id": "git",
+  "name": "Git",
+  "version": "0.1.0",
+  "description": "Stages, unstages and commits the diagram in its git repository and shows what changed in it since a revision, state by state and transition by transition. Needs git, and for the diff the hsm_git modules with the CyberiadaML binding 1.2 in the Python the plugin runs with.",
+  "icon": "icons/git.svg",
+  "interpreter": "python3",
+  "env": { "PYTHONUTF8": "1" },
+  "requires": { "programs": ["git"] },
+  "parameters": [
+    { "id": "revision", "type": "string", "label": "Revision", "scope": "run", "default": "HEAD",
+      "required": true, "description": "The commit to compare with: HEAD, HEAD~1, a branch, a tag or a hash" },
+    { "id": "geometry", "type": "bool", "label": "Geometry", "scope": "run", "default": false,
+      "description": "Also show the moved and resized elements, the ids and the view state" },
+    { "id": "message", "type": "string", "label": "Message", "scope": "run", "required": true,
+      "description": "The commit message, one line" }
+  ],
+  "actions": [
+    { "id": "stage", "label": "Stage", "result": "log", "when": ["saved", "git"],
+      "reason": "Save the diagram of a git work tree", "parameters": [], "toolbar": true,
+      "icon": "icons/stage.svg", "description": "Add the saved diagram to the index of its repository (git add)",
+      "argv": ["-m", "hsm_git", "stage", "${document}"] },
+    { "id": "unstage", "label": "Unstage", "result": "log", "when": ["git"], "parameters": [],
+      "description": "Take the diagram out of the index, its file kept as it is",
+      "argv": ["-m", "hsm_git", "unstage", "${document}"] },
+    { "id": "commit", "label": "Commit...", "result": "log", "when": ["git"], "parameters": ["message"],
+      "timeout": 0, "icon": "icons/commit.svg",
+      "description": "Commit every staged file of the repository with the message (git commit)",
+      "argv": ["-m", "hsm_git", "commit", "${document}", "--message-file", "${param-file:message}"] },
+    { "id": "diff", "label": "Changes Since a Revision...", "result": "log", "when": ["git"],
+      "parameters": ["revision", "geometry"], "toolbar": true, "icon": "icons/diff.svg",
+      "description": "The states, the transitions and the comments changed since the revision, the unsaved edits included",
+      "argv": ["-m", "hsm_git", "diff", "${document}", "--current", "${input}", "--revision=${param:revision}",
+               {"if": "geometry", "argv": ["--geometry"]}] }
+  ],
+  "session": {
+    "version": 1,
+    "actions": [
+      { "id": "commit-session", "label": "Commit...", "replaces": ["commit"], "result": "log",
+        "exit_ok": [0, 1], "when": ["git"], "parameters": [], "toolbar": true, "icon": "icons/commit.svg",
+        "description": "Show the branch and the staged files, ask the message and commit them all",
+        "argv": ["-m", "hsm_git", "commit", "${document}", "--session", "--request", "${request}"] }
+    ]
+  }
+}

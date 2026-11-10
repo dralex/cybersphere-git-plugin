@@ -33,6 +33,24 @@ Plugins > Git:
 The editor greys the actions out unless git is installed and the diagram is a
 file of a git work tree; Stage also needs the diagram saved.
 
+## Installation
+
+The Debian package - the module `hsm_git`, `hsm-git`, the editor plugin in
+`/usr/share/cyberiada-pro/plugins/git` and the documentation:
+
+    cmake -B build && cd build && ctest && cpack -G DEB
+    sudo apt install ./python3-cybersphere-git_0.1.0_all.deb
+
+With pip, then the plugin copied into the user plugin folder of the editor,
+bound to that Python:
+
+    pip install /path/to/cybersphere-git-plugin
+    hsm-git --install-editor-plugin
+
+`CyberiadaPro --plugin-path /path/to/cybersphere-git-plugin` finds the plugin
+in the source tree without a copy; then `python3` needs the repository and the
+`CyberiadaML` module on its path.
+
 ## Usage
 
     hsm-git diff diagrams/light.graphml --revision=HEAD~1
@@ -40,7 +58,7 @@ file of a git work tree; Stage also needs the diagram saved.
 
 ## Tests
 
-    cd test && python3 run.py && python3 session_test.py && python3 plugin_test.py
+    cmake -B build && cd build && ctest
 
 The tests make temporary repositories with a git configuration of their own,
 drive the commit session over its pipes and run the plugin in the batch mode
@@ -51,5 +69,6 @@ of CyberiadaPro (skipped without the editor).
 * python3 (version 3.8+)
 * git (version 2.23+)
 * the `CyberiadaML` module with `Document.diff`: libcyberiadamlpp-py
-  (version 1.1.0+, with its libraries) - for the diff
+  (version 1.2.0+, with its libraries) - for the diff
+* cmake (version 3.16+) - for the Debian package
 * CyberiadaPro with the plugin conditions (the `git` token) and the sessions
