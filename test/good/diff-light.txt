@@ -1,0 +1,29 @@
+--- HEAD:diagrams/light.graphml
++++ working
+  state Red
++   color: red
++ state Blink
++   entry: led.blink()
+  state Night
+    state Yellow
+-     in: the top level
++     in: state Night
+  comment
+-   text: the main cycle
++   text: the main cycle, by day
+- state Green
+-   entry: led.on(GREEN)
+  transition Red -> Yellow [TICK]
+-   do: timer.start(3000)
++   do: timer.start(2000)
++ transition Yellow -> Red [TICK]
+- transition Red -> Night [NIGHT]
++ transition Red -> Blink [NIGHT]
+- transition Night -> Red [DAY]
++ transition Night -> Red [DAWN]
+- transition Yellow -> Green [TICK]
+- transition Green -> Red [TICK]
+  meta
+-   platform: ArduinoUno
++   platform: ArduinoNano
+7 changed, 2 added, 3 removed

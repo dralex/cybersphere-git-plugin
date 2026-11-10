@@ -128,15 +128,17 @@ before the question with exit 3.
 * `Repository.staged()` - the staged changes: a list of `(status, path)`.
 * `Repository.revision(rev)` - the commit hash of a revision; raises
   `GitError` when there is none.
-* `Repository.blob(rev, out)` - writes the file of the revision into `out`;
-  returns the path it had there, or `None` when it is not in the revision.
+* `Repository.blob(commit, out)` - writes the file of the commit into `out`;
+  returns the path it had there, or `None` when it is not in the commit.
 
 ### `hsm_git.diff`
 
+* `load(path)` - the document of a file in any format the library reads; a
+  missing or empty file is an empty document.
 * `compare(old, new, geometry=False)` - the `CyberiadaML.DocumentDiff` of two
   documents.
-* `text(old, new, result, header, geometry=False)` - the lines of the text of
-  the diff.
+* `text(old, new, result, revision, geometry=False)` - the lines of the diff
+  after its header: the elements and the summary.
 
 ### `hsm_git.git`
 
