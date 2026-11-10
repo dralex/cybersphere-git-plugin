@@ -1,10 +1,10 @@
 # The CyberiadaPro Git Plugin Interface Specification
 
-Document version: 0.1 (2026-11-10)
+Document version: 0.2 (2026-11-10)
 
 The interface of `hsm_git`: the command line the editor plugin runs, its exit
-codes, the text of a diff, the commit session and the Python functions behind
-them. The reasons are in `ARCHITECTURE.md`.
+codes, the text of a diff, the revision file of a diff tab, the commit session
+and the Python functions behind them. The reasons are in `ARCHITECTURE.md`.
 
 ## The command line
 
@@ -13,6 +13,7 @@ them. The reasons are in `ARCHITECTURE.md`.
     hsm-git commit DOCUMENT --message-file FILE
     hsm-git commit DOCUMENT --session [--request FILE]
     hsm-git diff DOCUMENT [--current FILE] [--revision=REV] [--geometry]
+    hsm-git revision DOCUMENT [--revision=REV] --output FILE
     hsm-git --install-editor-plugin [DIR]
 
 `python3 -m hsm_git` is `hsm-git`. `DOCUMENT` is the diagram file; git runs in
@@ -31,12 +32,17 @@ its directory.
   default); `--current FILE` is the diagram to compare, the editor's
   `${input}` (DOCUMENT itself without it); `--geometry` adds the geometry, the
   ids and the view state.
+* `revision` - writes the diagram as the revision (`HEAD` by default) stored
+  it into FILE, the editor's `${output}` of a `diff` result: the old path of a
+  staged rename, an empty FILE when the diagram is not in the revision (or
+  the repository has no commit yet); prints `<revision>:<path>`, or
+  `<path> is not in <revision>`. Needs no `CyberiadaML`.
 * `--install-editor-plugin [DIR]` - copies `editor-plugin` into DIR or into
   the user plugin folder of CyberiadaPro, bound to the Python that runs it.
 
 | Exit code | Meaning |
 |---|---|
-| 0 | done: staged, unstaged, committed, the diff printed (changes or none) |
+| 0 | done: staged, unstaged, committed, the diff printed (changes or none), the revision written (empty or not) |
 | 1 | the commit declined or the session stopped: nothing committed |
 | 2 | a usage error |
 | 3 | nothing is staged |
@@ -133,6 +139,9 @@ before the question with exit 3.
 
 ### `hsm_git.diff`
 
+* `base(repo, revision, out)` - writes the diagram of the revision into
+  `out`, empty when it is not there; returns its path in the repository, or
+  `None`. The base of both `diff` and `revision`; needs no `CyberiadaML`.
 * `load(path)` - the document of a file in any format the library reads; a
   missing or empty file is an empty document.
 * `compare(old, new, geometry=False)` - the `CyberiadaML.DocumentDiff` of two
