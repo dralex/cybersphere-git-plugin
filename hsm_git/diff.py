@@ -1,7 +1,8 @@
 # -----------------------------------------------------------------------------
 #  The CyberiadaPro git plugin
 #
-#  The diff of a diagram against a revision as text
+#  The diff of a diagram against a revision as text, the revision file of a
+#  diff tab
 #
 #  Copyright (C) 2026 Alexey Fedoseev <aleksey@fedoseev.net>
 #
@@ -20,8 +21,9 @@
 #
 #  -----------------------------------------------------------------------------
 
-"""The documents of a diff and its text (docs/API.md, The text of a diff). The
-library pairs the elements, this module only writes the pairs."""
+"""The revision file of a diagram, the documents of a diff and its text
+(docs/API.md, The text of a diff). The library pairs the elements, this module
+only writes the pairs."""
 
 import os
 import tempfile
@@ -32,8 +34,12 @@ from hsm_git.repo import Repository
 WORKING = 'working'
 NO_FILE = '/dev/null'
 REVISION_FILE = 'revision.graphml'
-# the editor's view state, written at every save: shown with the geometry only
+# the editor's own metainformation, written at every save: the view state and
+# the marker of the stored region frames; shown with the geometry only, as the
+# diff tab of the editor does
 EDITOR_VIEW = 'cyberiadaEditorView'
+REGION_GEOMETRY = 'regionGeometry'
+GEOMETRY_META = (EDITOR_VIEW, REGION_GEOMETRY)
 CONTEXT = '  '
 REMOVED = '- '
 ADDED = '+ '
@@ -365,7 +371,7 @@ class Writer:
 
     def meta(self, result):
         """The differing metainformation, last."""
-        entries = [m for m in result.meta if self.geometry or m.name != EDITOR_VIEW]
+        entries = [m for m in result.meta if self.geometry or m.name not in GEOMETRY_META]
         if not entries:
             return
         self.emit(CONTEXT, 0, ['meta'])
@@ -399,6 +405,31 @@ def text(old, new, result, revision, geometry=False):
     return out.lines
 
 
+def base(repo, revision, out):
+    """Write the diagram of the revision into out, an empty file when the
+    revision lacks it; return its path in the repository, or None. Needs no
+    CyberiadaML."""
+    path = None
+    # a repository without a commit has an empty HEAD
+    if revision != 'HEAD' or repo.has_commits:
+        path = repo.blob(repo.revision(revision), out)
+    if path is None:
+        with open(out, 'wb'):
+            pass
+    return path
+
+
+def write_revision(document, output, revision='HEAD'):
+    """Write the diagram as the revision has it into output, the base of a
+    diff tab of the editor (docs/ARCHITECTURE.md, The compare)."""
+    repo = Repository.locate(document)
+    path = base(repo, revision, output)
+    if path is None:
+        print('{} is not in {}'.format(repo.path, revision))
+    else:
+        print('{}:{}'.format(revision, path))
+
+
 def run(document, current=None, revision='HEAD', geometry=False):
     """Print the changes of the diagram (the file, or current: the editor's
     copy) since the revision."""
@@ -406,16 +437,13 @@ def run(document, current=None, revision='HEAD', geometry=False):
     repo = Repository.locate(document)
     with tempfile.TemporaryDirectory() as tmp:
         blob = os.path.join(tmp, REVISION_FILE)
-        if revision == 'HEAD' and not repo.has_commits:
-            path = None
-        else:
-            path = repo.blob(repo.revision(revision), blob)
+        path = base(repo, revision, blob)
         if path is None:
             print('--- {} ({} is not in {})'.format(NO_FILE, repo.path, revision))
         else:
             print('--- {}:{}'.format(revision, path))
         print('+++ ' + WORKING)
-        old = load(blob if path is not None else None)
+        old = load(blob)
         new = load(current if current is not None else document)
         for line in text(old, new, compare(old, new, geometry), revision, geometry):
             print(line)

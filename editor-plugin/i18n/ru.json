@@ -1,6 +1,6 @@
 {
   "Git": "Git",
-  "Stages, unstages and commits the diagram in its git repository and shows what changed in it since a revision, state by state and transition by transition. Needs git, and for the diff the hsm_git modules with the CyberiadaML binding 1.2 in the Python the plugin runs with.": "Добавляет диаграмму в индекс её репозитория git и убирает из него, фиксирует индекс и показывает, что изменилось в диаграмме с выбранной ревизии, по состояниям и переходам. Нужен git, а для сравнения — модули hsm_git с привязкой CyberiadaML 1.2 в Python, которым запускается плагин.",
+  "Stages, unstages and commits the diagram in its git repository and shows what changed in it since a revision, state by state and transition by transition, as text or side by side in a diff tab. Needs git, and for the text diff the hsm_git modules with the CyberiadaML binding 1.2 in the Python the plugin runs with.": "Добавляет диаграмму в индекс её репозитория git и убирает из него, фиксирует индекс и показывает, что изменилось в диаграмме с выбранной ревизии, по состояниям и переходам, текстом или рядом во вкладке сравнения. Нужен git, а для текстового сравнения — модули hsm_git с привязкой CyberiadaML 1.2 в Python, которым запускается плагин.",
   "Revision": "Ревизия",
   "The commit to compare with: HEAD, HEAD~1, a branch, a tag or a hash": "Коммит для сравнения: HEAD, HEAD~1, ветка, метка или хеш",
   "Geometry": "Геометрия",
@@ -16,5 +16,7 @@
   "Commit every staged file of the repository with the message (git commit)": "Зафиксировать все файлы индекса репозитория с сообщением (git commit)",
   "Changes Since a Revision...": "Изменения с ревизии...",
   "The states, the transitions and the comments changed since the revision, the unsaved edits included": "Состояния, переходы и комментарии, изменённые с ревизии, включая несохранённые правки",
+  "Compare with a Revision...": "Сравнить с ревизией...",
+  "The revision and the diagram with its unsaved edits side by side in a diff tab, the changes marked": "Ревизия и диаграмма с несохранёнными правками рядом во вкладке сравнения, изменения отмечены",
   "Show the branch and the staged files, ask the message and commit them all": "Показать ветку и файлы индекса, запросить сообщение и зафиксировать их все"
 }

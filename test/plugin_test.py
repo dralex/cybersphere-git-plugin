@@ -21,24 +21,27 @@
 #  -----------------------------------------------------------------------------
 
 """The plugin: its installation and its texts, then in the editor Stage, the
-diff and the commit session from a session script; the editor part is skipped
-without a CyberiadaPro binary that starts (CYBERIADA_PRO, PATH, or the sibling
-build) or with one before the git token (EDIT-PLUG-55)."""
+diff, the compare and the commit session from a session script; the editor
+part is skipped without a CyberiadaPro binary that starts (CYBERIADA_PRO, PATH,
+or the sibling build) or with one before the git token (EDIT-PLUG-55) or the
+diff tabs (EDIT-PLUG-58), which rejects the plugin."""
 
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 
-from testenv import Repo, report, git_found, binding_diff, SKIP, REPOSITORY, LIGHT, LIGHT_EDITED, DIAGRAM
+from testenv import Repo, report, git_found, binding_diff, SKIP, REPOSITORY, TEST_DIR, LIGHT, LIGHT_EDITED, DIAGRAM
 
 import hsm_git.plugin  # pylint: disable=wrong-import-position,wrong-import-order
 
 PLUGIN = hsm_git.plugin.PLUGIN_ID
 TIMEOUT_S = 120
 SESSION_DIR = os.path.join(REPOSITORY, 'test', 'session')
+GOOD_COMPARE = os.path.join(TEST_DIR, 'good', 'compare-light.txt')
 
 
 def installer():
@@ -125,6 +128,50 @@ def batch(binary, env, *args):
     return result.returncode, result.stdout
 
 
+def section(out, name):
+    """The lines of a section of a batch dump."""
+    lines, inside = [], False
+    for line in out.splitlines():
+        if line.startswith('== '):
+            inside = line == '== ' + name
+        elif inside:
+            lines.append(line)
+    return lines
+
+
+def counts(lines):
+    """The changed, added and removed counts of a summary line of either diff."""
+    for line in lines:
+        found = re.search(r'(\d+) changed, (\d+) added, (\d+) removed', line)
+        if found is None:
+            found = re.search(r'changed: (\d+), added: (\d+), removed: (\d+)', line)
+        if found is not None:
+            return tuple(int(n) for n in found.groups())
+    return None
+
+
+def compare_part(binary, env, document):
+    """The compare: the revision as the base of a diff tab, its pairs those of
+    the text diff; the failures."""
+    failed = 0
+    run = ['--plugin-path', '.', '--run-plugin']
+    code, out = batch(binary, env, document, *run, PLUGIN + ':compare', '--dump', '--dump-tabs')
+    diff = section(out, 'diff')
+    with open(GOOD_COMPARE, encoding='utf-8') as file:
+        good = file.read().splitlines()
+    failed += report('the compare', code == 0 and diff == good and
+                     '1 light.graphml ↔ HEAD diff active' in section(out, 'tabs') and
+                     'stdout:' in section(out, 'plugin') and '  HEAD:' + DIAGRAM in section(out, 'plugin'), out)
+    if binding_diff():
+        code, text = batch(binary, env, document, *run, PLUGIN + ':diff', '--dump-plugin')
+        failed += report('the compare pairs those of the text diff', code == 0 and counts(diff) is not None and
+                         counts(diff) == counts(section(text, 'plugin')), out + text)
+    code, out = batch(binary, env, document, *run, PLUGIN + ':compare', '--plugin-param', 'revision=nope', '--dump-plugin')
+    failed += report('the compare with a missing revision', code != 0 and "'nope' is not found" in out and
+                     'state: failed' in out, out)
+    return failed
+
+
 def editor_part(binary, env, repo):
     """The plugin in the editor; the failures."""
     failed = 0
@@ -142,6 +189,7 @@ def editor_part(binary, env, repo):
     session = ['--session-script', os.path.join(SESSION_DIR, 'decline.session'), '--dump-session']
     code, out = batch(binary, env, document, *run, PLUGIN + ':commit-session', *session)
     failed += report('the declined commit', code == 0 and repo.count() == count, out)
+    failed += compare_part(binary, env, document)
     if binding_diff():
         code, out = batch(binary, env, document, *run, PLUGIN + ':diff', '--dump-plugin')
         failed += report('the diff', code == 0 and 'transition Red -> Yellow [TICK]' in out and

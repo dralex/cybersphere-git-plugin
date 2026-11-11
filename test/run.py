@@ -20,8 +20,9 @@
 #
 #  -----------------------------------------------------------------------------
 
-"""Stage, unstage, the one-shot commit and the diff (docs/API.md) on
-temporary repositories; the diff part is skipped without Document.diff."""
+"""Stage, unstage, the one-shot commit, the revision file and the diff
+(docs/API.md) on temporary repositories; the diff part is skipped without
+Document.diff."""
 
 import contextlib
 import io
@@ -96,6 +97,50 @@ def actions():
     return failed
 
 
+def same_bytes(first, second):
+    """Two files hold the same bytes."""
+    with open(first, 'rb') as one, open(second, 'rb') as two:
+        return one.read() == two.read()
+
+
+def revisions():
+    """The revision file of a diff tab, which needs no CyberiadaML; the
+    failures."""
+    failed = 0
+    repo = Repo()
+    try:
+        document = repo.put(DIAGRAM, LIGHT)
+        output = os.path.join(repo.tmp, 'revision.graphml')
+        code, out, err = hsm_git(repo, 'revision', document, '--output', output)
+        failed += report('the revision before the first commit', code == EXIT_OK and
+                         out.strip() == '{} is not in HEAD'.format(DIAGRAM) and os.path.getsize(output) == 0,
+                         out + err)
+        repo.commit()
+        repo.put(DIAGRAM, LIGHT_EDITED)
+        code, out, err = hsm_git(repo, 'revision', document, '--output', output)
+        failed += report('the revision as stored, not the edited file', code == EXIT_OK and
+                         out.strip() == 'HEAD:' + DIAGRAM and same_bytes(output, LIGHT), out + err)
+        repo.commit('edited')
+        repo.git('mv', DIAGRAM, 'diagrams/moved.graphml')
+        moved = repo.path('diagrams/moved.graphml')
+        code, out, err = hsm_git(repo, 'revision', moved, '--revision=HEAD~1', '--output', output)
+        failed += report('the old path of a staged rename', code == EXIT_OK and
+                         out.strip() == 'HEAD~1:' + DIAGRAM and same_bytes(output, LIGHT), out + err)
+        new = repo.put('diagrams/new.graphml', LIGHT)
+        code, out, err = hsm_git(repo, 'revision', new, '--output', output)
+        failed += report('a new file: an empty revision', code == EXIT_OK and
+                         out.strip() == 'diagrams/new.graphml is not in HEAD' and os.path.getsize(output) == 0,
+                         out + err)
+        code, out, err = hsm_git(repo, 'revision', moved, '--revision=-x', '--output', output)
+        failed += report('a revision like an option refused', code == EXIT_USAGE and 'refused' in err, out + err)
+        code, out, err = hsm_git(repo, 'revision', moved, '--revision=nope', '--output', output)
+        failed += report('a missing revision for the file', code == EXIT_FAILED and "'nope' is not found" in err,
+                         out + err)
+    finally:
+        repo.cleanup()
+    return failed
+
+
 def diffs():
     """The text of the diff; the failures."""
     failed = 0
@@ -143,7 +188,7 @@ def main():
     if not git_found():
         print('skipped: no git')
         return SKIP
-    failed = actions()
+    failed = actions() + revisions()
     if binding_diff():
         failed += diffs()
     else:

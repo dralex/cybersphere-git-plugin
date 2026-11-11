@@ -3,7 +3,8 @@
 The git plugin of CyberiadaPro, the Cyberiada HSM diagram editor: it stages
 and unstages the open diagram, commits the index after showing the branch and
 the staged files, and shows what changed in the diagram since a revision -
-state by state and transition by transition, the unsaved edits included. The
+state by state and transition by transition, the unsaved edits included, as
+text or side by side in a diff tab of the editor. The
 plugin is written in Python 3 and runs git; the diagrams are compared by the
 document diff of libcyberiadaml.
 
@@ -29,9 +30,11 @@ Plugins > Git:
 | Unstage | takes the diagram out of the index, the file kept |
 | Commit... | lists the branch and the staged files, asks the message, commits the whole index |
 | Changes Since a Revision... | prints the changed states, transitions, comments and metadata since the revision (`HEAD` by default) |
+| Compare with a Revision... | opens a diff tab: the revision and the diagram with its unsaved edits side by side, the changes marked; Document > Refresh compares again |
 
 The editor greys the actions out unless git is installed and the diagram is a
-file of a git work tree; Stage also needs the diagram saved.
+file of a git work tree, in an HSM, FA or inspection tab; Stage also needs the
+diagram saved. Compare with a Revision... needs an editor with the diff tabs.
 
 ## Installation
 
@@ -54,6 +57,7 @@ in the source tree without a copy; then `python3` needs the repository and the
 ## Usage
 
     hsm-git diff diagrams/light.graphml --revision=HEAD~1
+    hsm-git revision diagrams/light.graphml --revision=HEAD~1 --output light-old.graphml
     hsm-git stage diagrams/light.graphml
 
 ## Tests

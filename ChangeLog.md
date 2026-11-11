@@ -15,4 +15,11 @@ Added:
   Revision..., greyed out without git or outside a git work tree (the editor
   conditions `requires` and `git`), the Russian texts;
 - `hsm-git --install-editor-plugin [DIR]` and the Debian package
-  `python3-cybersphere-git`.
+  `python3-cybersphere-git`;
+- Compare with a Revision...: `hsm-git revision` writes the diagram as a
+  revision stores it (the old path of a staged rename, an empty file for a
+  new one) for a diff tab of the editor (`result: diff`), the text diff and
+  the tab sharing the revision file and the pairs;
+- the actions work in the HSM, FA and inspection tabs of the editor
+  (`modes`); the editor's `regionGeometry` marker is shown with the Geometry
+  option only, as the view state.

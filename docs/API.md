@@ -1,6 +1,6 @@
 # The CyberiadaPro Git Plugin Interface Specification
 
-Document version: 0.2 (2026-11-10)
+Document version: 0.3 (2026-11-11)
 
 The interface of `hsm_git`: the command line the editor plugin runs, its exit
 codes, the text of a diff, the revision file of a diff tab, the commit session
@@ -31,7 +31,8 @@ its directory.
 * `diff` - prints the changes of the diagram since the revision (`HEAD` by
   default); `--current FILE` is the diagram to compare, the editor's
   `${input}` (DOCUMENT itself without it); `--geometry` adds the geometry, the
-  ids and the view state.
+  ids and the editor's own metainformation (the view state, the
+  `regionGeometry` marker), left out without it as in the editor's diff tab.
 * `revision` - writes the diagram as the revision (`HEAD` by default) stored
   it into FILE, the editor's `${output}` of a `diff` result: the old path of a
   staged rename, an empty FILE when the diagram is not in the revision (or

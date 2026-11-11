@@ -1,6 +1,6 @@
 # The CyberiadaPro Git Plugin Architecture
 
-Document version: 0.2 (2026-11-10)
+Document version: 0.3 (2026-11-11)
 
 The plugin brings the git repository of the open diagram into the CyberiadaPro
 editor: it stages and unstages the diagram, commits the index after showing
@@ -170,8 +170,10 @@ unsaved edits included - with the file in a revision, `HEAD` by default.
   against an empty document, everything added.
 * The library pairs the elements of the two documents and tells what differs
   in each pair; the plugin writes the pairs as text (`API.md`, The text of a
-  diff). The geometry, the ids and the editor's view state are left out unless
-  the Geometry option is on.
+  diff). The geometry, the ids and the editor's own metainformation - the
+  view state and the `regionGeometry` marker it writes at a save - are left
+  out unless the Geometry option is on, as in the diff tab of the editor, so
+  the two show the same pairs.
 * The comparison needs `Document.diff` of the binding: without it the diff
   fails with one line naming the package; the other actions work without
   `CyberiadaML`.
