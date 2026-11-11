@@ -9,6 +9,9 @@ Added:
 - the package `hsm_git` and the command `hsm-git` (`python3 -m hsm_git`):
   stage, unstage, the one-shot commit of the index, the diff of a diagram
   against a revision as text over `Document.diff` of libcyberiadamlpp-py 1.2;
+- `hsm-git revision`: the diagram of a revision written into a file, the base
+  of a diff tab of the editor - the old path of a staged rename, an empty file
+  for a diagram the revision lacks; the base of the text diff too;
 - the commit session of the editor: the branch and the staged files asked
   about, the answer the message, a changed index asked again;
 - the editor plugin `git`: Stage, Unstage, Commit... and Changes Since a

@@ -54,6 +54,7 @@ in the source tree without a copy; then `python3` needs the repository and the
 ## Usage
 
     hsm-git diff diagrams/light.graphml --revision=HEAD~1
+    hsm-git revision diagrams/light.graphml --revision=HEAD~1 --output old.graphml
     hsm-git stage diagrams/light.graphml
 
 ## Tests

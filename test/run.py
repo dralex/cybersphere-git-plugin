@@ -20,8 +20,9 @@
 #
 #  -----------------------------------------------------------------------------
 
-"""Stage, unstage, the one-shot commit and the diff (docs/API.md) on
-temporary repositories; the diff part is skipped without Document.diff."""
+"""Stage, unstage, the one-shot commit, the revision file and the diff
+(docs/API.md) on temporary repositories; the diff part is skipped without
+Document.diff."""
 
 import contextlib
 import io
@@ -96,6 +97,53 @@ def actions():
     return failed
 
 
+def same_bytes(path, source):
+    """The file holds what source holds."""
+    with open(path, 'rb') as one, open(source, 'rb') as other:
+        return one.read() == other.read()
+
+
+def revisions():
+    """The revision file of a diff tab, without the binding; the failures."""
+    failed = 0
+    repo = Repo()
+    try:
+        document = repo.put(DIAGRAM, LIGHT)
+        output = os.path.join(repo.tmp, 'output.graphml')
+        code, out, err = hsm_git(repo, 'revision', document, '--output', output)
+        failed += report('the revision before the first commit', code == EXIT_OK and
+                         out == '{} is not in HEAD\n'.format(DIAGRAM) and os.path.getsize(output) == 0, out + err)
+        repo.commit()
+        repo.put(DIAGRAM, LIGHT_EDITED)
+        code, out, err = hsm_git(repo, 'revision', document, '--output', output)
+        failed += report('the stored file, not the work tree', code == EXIT_OK and
+                         out == 'HEAD:{}\n'.format(DIAGRAM) and same_bytes(output, LIGHT), out + err)
+        repo.commit('edited')
+        code, out, err = hsm_git(repo, 'revision', document, '--revision=HEAD~1', '--output', output)
+        failed += report('an older revision', code == EXIT_OK and out == 'HEAD~1:{}\n'.format(DIAGRAM) and
+                         same_bytes(output, LIGHT), out + err)
+        repo.git('mv', DIAGRAM, 'diagrams/moved.graphml')
+        code, out, err = hsm_git(repo, 'revision', repo.path('diagrams/moved.graphml'), '--output', output)
+        failed += report('a staged rename written with the old path', code == EXIT_OK and
+                         out == 'HEAD:{}\n'.format(DIAGRAM) and same_bytes(output, LIGHT_EDITED), out + err)
+        new = repo.put('diagrams/new.graphml', LIGHT)
+        code, out, err = hsm_git(repo, 'revision', new, '--output', output)
+        failed += report('a diagram not in the revision: an empty file', code == EXIT_OK and
+                         out == 'diagrams/new.graphml is not in HEAD\n' and os.path.getsize(output) == 0, out + err)
+        code, out, err = hsm_git(repo, 'revision', new, '--revision=-x', '--output', output)
+        failed += report('a revision like an option refused', code == EXIT_USAGE and not out, out + err)
+        code, out, err = hsm_git(repo, 'revision', new, '--revision=nope', '--output', output)
+        failed += report('a missing revision', code == EXIT_FAILED and not out and "'nope' is not found" in err,
+                         out + err)
+        unwritable = os.path.join(repo.tmp, 'no-such-dir', 'output.graphml')
+        code, out, err = hsm_git(repo, 'revision', new, '--output', unwritable)
+        failed += report('an unwritable output', code == EXIT_FAILED and 'is not written' in err, out + err)
+        failed += report('no CyberiadaML needed', 'CyberiadaML' not in sys.modules)
+    finally:
+        repo.cleanup()
+    return failed
+
+
 def diffs():
     """The text of the diff; the failures."""
     failed = 0
@@ -133,6 +181,9 @@ def diffs():
         code, out, err = hsm_git(repo, 'diff', moved, '--revision=HEAD~1')
         failed += report('a staged rename compared with the old path', code == EXIT_OK and
                          out.startswith('--- HEAD~1:{}\n'.format(DIAGRAM)) and '+ state Blink' in out, out + err)
+        output = os.path.join(repo.tmp, 'output.graphml')
+        _, named, _ = hsm_git(repo, 'revision', moved, '--revision=HEAD~1', '--output', output)
+        failed += report('the revision file is the base of the diff', out.startswith('--- ' + named), named + out)
     finally:
         repo.cleanup()
     return failed
@@ -143,7 +194,8 @@ def main():
     if not git_found():
         print('skipped: no git')
         return SKIP
-    failed = actions()
+    # before binding_diff(): it imports CyberiadaML
+    failed = actions() + revisions()
     if binding_diff():
         failed += diffs()
     else:

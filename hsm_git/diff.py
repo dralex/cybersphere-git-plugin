@@ -399,6 +399,38 @@ def text(old, new, result, revision, geometry=False):
     return out.lines
 
 
+def base(repo, revision, out):
+    """Write the diagram of the revision into out, empty when the revision
+    lacks it; return its path in the repository, or None. The base of both
+    the text diff and a diff tab; needs no CyberiadaML."""
+    path = None
+    if revision != 'HEAD' or repo.has_commits:
+        path = repo.blob(repo.revision(revision), out)
+    if path is None:
+        # the editor reads an empty output as an empty document
+        with open(out, 'wb'):
+            pass
+    return path
+
+
+def named(repo, revision, path):
+    """The base as the header and the revision command name it."""
+    if path is None:
+        return '{} is not in {}'.format(repo.path, revision)
+    return '{}:{}'.format(revision, path)
+
+
+def write_revision(document, revision, output):
+    """Write the diagram of the revision into output, the ${output} of a diff
+    tab of the editor, and print which file it is."""
+    repo = Repository.locate(document)
+    try:
+        path = base(repo, revision, output)
+    except OSError as error:
+        raise GitError('the revision file is not written: {}'.format(error)) from error
+    print(named(repo, revision, path))
+
+
 def run(document, current=None, revision='HEAD', geometry=False):
     """Print the changes of the diagram (the file, or current: the editor's
     copy) since the revision."""
@@ -406,16 +438,13 @@ def run(document, current=None, revision='HEAD', geometry=False):
     repo = Repository.locate(document)
     with tempfile.TemporaryDirectory() as tmp:
         blob = os.path.join(tmp, REVISION_FILE)
-        if revision == 'HEAD' and not repo.has_commits:
-            path = None
-        else:
-            path = repo.blob(repo.revision(revision), blob)
+        path = base(repo, revision, blob)
         if path is None:
-            print('--- {} ({} is not in {})'.format(NO_FILE, repo.path, revision))
+            print('--- {} ({})'.format(NO_FILE, named(repo, revision, path)))
         else:
-            print('--- {}:{}'.format(revision, path))
+            print('--- ' + named(repo, revision, path))
         print('+++ ' + WORKING)
-        old = load(blob if path is not None else None)
+        old = load(blob)
         new = load(current if current is not None else document)
         for line in text(old, new, compare(old, new, geometry), revision, geometry):
             print(line)
