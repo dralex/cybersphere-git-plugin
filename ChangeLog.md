@@ -23,3 +23,9 @@ Added:
 - the actions work in the HSM, FA and inspection tabs of the editor
   (`modes`); the editor's `regionGeometry` marker is shown with the Geometry
   option only, as the view state.
+
+Open for the release:
+- the Debian package `Breaks: cyberiada-pro (<< X)`, X the first editor
+  version with the diff tabs: the editors v1.0-pre3 and v1.0-pre4 reject the
+  plugin for its `diff` result, and they share the package version 1.0.0
+  with the current editor.

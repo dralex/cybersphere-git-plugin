@@ -209,7 +209,8 @@ editor, The diff tab).
 * The geometry is the tab's own option (Document > Geometry), not a parameter.
 * An editor before the diff tabs rejects a descriptor with a `diff` result
   (`PLUGIN-API.md`, Results): the Debian package `Breaks` the editors without
-  them, and the plugin keeps the text diff for every editor.
+  them (the version is set at the release, `ChangeLog.md`), and the plugin
+  keeps the text diff for every editor.
 
 ## The command line
 
