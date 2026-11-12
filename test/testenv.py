@@ -86,9 +86,10 @@ class Repo:
         self.git('init', '-q')
         self.git('symbolic-ref', 'HEAD', 'refs/heads/main')
 
-    def git(self, *args):
-        """Run git in the repository; its stdout."""
+    def git(self, *args, stdin=None):
+        """Run git in the repository, stdin the text of its input; its stdout."""
         result = subprocess.run(['git'] + list(args), cwd=self.top, env=dict(os.environ, **self.env),
+                                input=None if stdin is None else stdin.encode('utf-8'),
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
         return result.stdout.decode('utf-8')
 

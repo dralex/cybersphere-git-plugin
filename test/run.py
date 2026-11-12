@@ -152,6 +152,35 @@ def revisions():
     return failed
 
 
+def indexes():
+    """The index as the base of a diff tab, without the binding; the
+    failures."""
+    failed = 0
+    repo = Repo()
+    try:
+        document = repo.put(DIAGRAM, LIGHT)
+        output = os.path.join(repo.tmp, 'index.graphml')
+        code, out, err = hsm_git(repo, 'revision', document, '--index', '--output', output)
+        failed += report('a file the index lacks', code == EXIT_OK and
+                         out.strip() == '{} is not in the index'.format(DIAGRAM) and os.path.getsize(output) == 0,
+                         out + err)
+        repo.git('add', DIAGRAM)
+        repo.put(DIAGRAM, LIGHT_EDITED)
+        code, out, err = hsm_git(repo, 'revision', document, '--index', '--output', output)
+        failed += report('the staged file before the first commit, not the edited one', code == EXIT_OK and
+                         out.strip() == 'index:' + DIAGRAM and same_bytes(output, LIGHT), out + err)
+        blob = repo.git('hash-object', '-w', DIAGRAM).strip()
+        repo.git('update-index', '--force-remove', DIAGRAM)
+        repo.git('update-index', '--index-info',
+                 stdin=''.join('100644 {} {}\t{}\n'.format(blob, stage, DIAGRAM) for stage in (1, 2, 3)))
+        code, out, err = hsm_git(repo, 'revision', document, '--index', '--output', output)
+        failed += report('an unmerged file refused', code == EXIT_FAILED and not out and 'is unmerged' in err,
+                         out + err)
+    finally:
+        repo.cleanup()
+    return failed
+
+
 def diffs():
     """The text of the diff; the failures."""
     failed = 0
@@ -188,6 +217,14 @@ def diffs():
         code, out, err = hsm_git(repo, 'diff', document, '--current', LIGHT, '--diagnostics', findings)
         failed += report('the editor copy compared, not the file', code == EXIT_OK and
                          out.splitlines()[-1] == 'no changes since HEAD' and read_json(findings) == [], out + err)
+        code, out, err = hsm_git(repo, 'diff', document, '--index')
+        failed += report('the diff against the index', code == EXIT_OK and
+                         out == good.replace('--- HEAD:', '--- index:', 1), out + err)
+        repo.git('add', DIAGRAM)
+        code, out, err = hsm_git(repo, 'diff', document, '--index')
+        failed += report('no changes against the index', code == EXIT_OK and
+                         out.splitlines()[-1] == 'no changes since the index', out + err)
+        repo.git('reset', '-q', '--', DIAGRAM)
         code, out, err = hsm_git(repo, 'diff', document, '--geometry')
         lines = out.splitlines()
         failed += report('the geometry', code == EXIT_OK and any(line.startswith('-   at: ') for line in lines) and
@@ -212,7 +249,7 @@ def main():
     if not git_found():
         print('skipped: no git')
         return SKIP
-    failed = actions() + revisions()
+    failed = actions() + revisions() + indexes()
     if binding_diff():
         failed += diffs()
     else:

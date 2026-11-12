@@ -34,6 +34,9 @@ from hsm_git.repo import Repository
 
 WORKING = 'working'
 NO_FILE = '/dev/null'
+# the index as the base: its label in the header, its name in the text
+INDEX = 'index'
+INDEX_NAME = 'the index'
 REVISION_FILE = 'revision.graphml'
 # the editor's own metainformation, written at every save: the view state and
 # the marker of the stored region frames; shown with the geometry only, as the
@@ -482,37 +485,60 @@ def base(repo, revision, out):
     return path
 
 
-def write_revision(document, output, revision='HEAD'):
-    """Write the diagram as the revision has it into output, the base of a
-    diff tab of the editor (docs/ARCHITECTURE.md, The compare)."""
+def base_index(repo, out):
+    """Write the diagram as the index stages it into out, an empty file when
+    the index lacks it; return its path, or None."""
+    path = repo.index_blob(out)
+    if path is None:
+        with open(out, 'wb'):
+            pass
+    return path
+
+
+def fetch(repo, revision, index, out):
+    """Write the base of a diff into out - the revision, or the index; return
+    its path (None without the file), its label and its name."""
+    if index:
+        return base_index(repo, out), INDEX, INDEX_NAME
+    return base(repo, revision, out), revision, revision
+
+
+def header(repo, path, label, name):
+    """The first line of a diff."""
+    if path is None:
+        return '--- {} ({} is not in {})'.format(NO_FILE, repo.path, name)
+    return '--- {}:{}'.format(label, path)
+
+
+def write_revision(document, output, revision='HEAD', index=False):
+    """Write the diagram as the revision or the index has it into output, the
+    base of a diff tab of the editor (docs/ARCHITECTURE.md, The compare)."""
     repo = Repository.locate(document)
     try:
-        path = base(repo, revision, output)
+        path, label, name = fetch(repo, revision, index, output)
     except OSError as error:
         raise GitError('the revision file is not written: {}'.format(error)) from error
     if path is None:
-        print('{} is not in {}'.format(repo.path, revision))
+        print('{} is not in {}'.format(repo.path, name))
     else:
-        print('{}:{}'.format(revision, path))
+        print('{}:{}'.format(label, path))
 
 
-def run(document, current=None, revision='HEAD', geometry=False, diagnostics=None):
+def run(document, current=None, revision='HEAD', geometry=False, diagnostics=None, index=False):
     """Print the changes of the diagram (the file, or current: the editor's
-    copy) since the revision; write their findings into diagnostics."""
+    copy) since the revision or against the index; write their findings into
+    diagnostics."""
     binding()
     repo = Repository.locate(document)
     with tempfile.TemporaryDirectory() as tmp:
         blob = os.path.join(tmp, REVISION_FILE)
-        path = base(repo, revision, blob)
-        if path is None:
-            print('--- {} ({} is not in {})'.format(NO_FILE, repo.path, revision))
-        else:
-            print('--- {}:{}'.format(revision, path))
+        path, label, name = fetch(repo, revision, index, blob)
+        print(header(repo, path, label, name))
         print('+++ ' + WORKING)
         old = load(blob)
         new = load(current if current is not None else document)
         findings = []
-        for line in text(old, new, compare(old, new, geometry), revision, geometry, findings):
+        for line in text(old, new, compare(old, new, geometry), name, geometry, findings):
             print(line)
     if diagnostics is not None:
         write_findings(diagnostics, findings)

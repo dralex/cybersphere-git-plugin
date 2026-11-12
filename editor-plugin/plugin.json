@@ -41,7 +41,11 @@
       "modes": ["hsm", "fa", "inspection"], "parameters": ["revision"], "toolbar": true,
       "icon": "icons/compare.svg",
       "description": "The revision and the diagram with its unsaved edits side by side in a diff tab, the changes marked",
-      "argv": ["-m", "hsm_git", "revision", "${document}", "--revision=${param:revision}", "--output", "${output}"] }
+      "argv": ["-m", "hsm_git", "revision", "${document}", "--revision=${param:revision}", "--output", "${output}"] },
+    { "id": "compare-index", "label": "Compare with the Index", "result": "diff", "when": ["git"],
+      "modes": ["hsm", "fa", "inspection"], "parameters": [], "icon": "icons/compare.svg",
+      "description": "The staged diagram and the diagram with its unsaved edits side by side in a diff tab: what the commit takes",
+      "argv": ["-m", "hsm_git", "revision", "${document}", "--index", "--output", "${output}"] }
   ],
   "session": {
     "version": 1,

@@ -31,6 +31,7 @@ Plugins > Git:
 | Commit... | lists the branch and the staged files, asks the message, commits the whole index |
 | Changes Since a Revision... | prints the changed states, transitions, comments and metadata since the revision (`HEAD` by default); the Diagnostics dock lists them, a click selects the element |
 | Compare with a Revision... | opens a diff tab: the revision and the diagram with its unsaved edits side by side, the changes marked; Document > Refresh compares again |
+| Compare with the Index | the same diff tab with the staged diagram as the base: what the commit takes against the edits |
 
 The editor greys the actions out unless git is installed and the diagram is a
 file of a git work tree, in an HSM, FA or inspection tab; Stage also needs the
@@ -58,6 +59,7 @@ in the source tree without a copy; then `python3` needs the repository and the
 
     hsm-git diff diagrams/light.graphml --revision=HEAD~1
     hsm-git revision diagrams/light.graphml --revision=HEAD~1 --output light-old.graphml
+    hsm-git diff diagrams/light.graphml --index
     hsm-git stage diagrams/light.graphml
 
 ## Tests

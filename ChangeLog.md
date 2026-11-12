@@ -25,7 +25,10 @@ Added:
   option only, as the view state;
 - the findings of Changes Since a Revision...: the changed elements in the
   Diagnostics of the editor, a click selects one (`hsm-git diff
-  --diagnostics`).
+  --diagnostics`);
+- Compare with the Index: the staged diagram as the base of a diff tab
+  (`hsm-git revision --index`), the text diff against the index (`hsm-git
+  diff --index`), an unmerged file refused.
 
 Open for the release:
 - the Debian package `Breaks: cyberiada-pro (<< X)`, X the first editor

@@ -150,7 +150,7 @@ def counts(lines):
     return None
 
 
-def compare_part(binary, env, document):
+def compare_part(binary, env, repo, document):
     """The compare: the revision as the base of a diff tab, its pairs those of
     the text diff; the failures."""
     failed = 0
@@ -169,6 +169,14 @@ def compare_part(binary, env, document):
     code, out = batch(binary, env, document, *run, PLUGIN + ':compare', '--plugin-param', 'revision=nope', '--dump-plugin')
     failed += report('the compare with a missing revision', code != 0 and "'nope' is not found" in out and
                      'state: failed' in out, out)
+    # the index as HEAD: the pairs of the compare, the base named by the action
+    repo.git('reset', '-q', '--', DIAGRAM)
+    code, out = batch(binary, env, document, *run, PLUGIN + ':compare-index', '--dump', '--dump-tabs')
+    repo.git('add', DIAGRAM)
+    index_good = ['base: Compare with the Index' if line == 'base: HEAD' else line for line in good]
+    failed += report('the compare with the index', code == 0 and section(out, 'diff') == index_good and
+                     '1 light.graphml ↔ Compare with the Index diff active' in section(out, 'tabs') and
+                     '  index:' + DIAGRAM in section(out, 'plugin'), out)
     return failed
 
 
@@ -189,7 +197,7 @@ def editor_part(binary, env, repo):
     session = ['--session-script', os.path.join(SESSION_DIR, 'decline.session'), '--dump-session']
     code, out = batch(binary, env, document, *run, PLUGIN + ':commit-session', *session)
     failed += report('the declined commit', code == 0 and repo.count() == count, out)
-    failed += compare_part(binary, env, document)
+    failed += compare_part(binary, env, repo, document)
     if binding_diff():
         code, out = batch(binary, env, document, *run, PLUGIN + ':diff', '--dump-plugin')
         failed += report('the diff', code == 0 and 'transition Red -> Yellow [TICK]' in out and

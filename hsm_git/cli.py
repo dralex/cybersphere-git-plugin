@@ -31,6 +31,13 @@ from hsm_git import __version__, GitError, EXIT_OK, EXIT_USAGE, EXIT_FAILED
 from hsm_git import actions
 
 
+def base_of(command):
+    """The base of a diff: a revision or the index."""
+    which = command.add_mutually_exclusive_group()
+    which.add_argument('--revision', default='HEAD', help='the revision, HEAD by default')
+    which.add_argument('--index', action='store_true', help='the index instead of a revision')
+
+
 def parser():
     """The arguments of hsm-git."""
     main_parser = argparse.ArgumentParser(
@@ -52,12 +59,12 @@ def parser():
     diff = commands.add_parser('diff', help='the changes of the diagram since a revision')
     diff.add_argument('document')
     diff.add_argument('--current', metavar='FILE', help='the diagram to compare, the file by default')
-    diff.add_argument('--revision', default='HEAD', help='the revision, HEAD by default')
+    base_of(diff)
     diff.add_argument('--geometry', action='store_true', help='the geometry, the ids and the view state too')
     diff.add_argument('--diagnostics', metavar='FILE', help='also write the changes as the findings of the editor')
     revision = commands.add_parser('revision', help='the diagram as a revision has it, into a file')
     revision.add_argument('document')
-    revision.add_argument('--revision', default='HEAD', help='the revision, HEAD by default')
+    base_of(revision)
     revision.add_argument('--output', metavar='FILE', required=True,
                           help='the file to write, empty when the revision lacks the diagram')
     return main_parser
@@ -88,10 +95,10 @@ def run(args):
         actions.commit(args.document, args.message_file)
     elif args.command == 'diff':
         from hsm_git import diff  # pylint: disable=import-outside-toplevel
-        diff.run(args.document, args.current, args.revision, args.geometry, args.diagnostics)
+        diff.run(args.document, args.current, args.revision, args.geometry, args.diagnostics, args.index)
     elif args.command == 'revision':
         from hsm_git import diff  # pylint: disable=import-outside-toplevel
-        diff.write_revision(args.document, args.output, args.revision)
+        diff.write_revision(args.document, args.output, args.revision, args.index)
     return EXIT_OK
 
 

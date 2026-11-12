@@ -32,6 +32,10 @@ DETACHED = 'detached at {}'
 # the name-status letters followed by two paths: a rename, a copy
 TWO_PATHS = 'RC'
 RENAME_PATHS = 2
+# the fields of an ls-files --stage entry; stage 0 is a merged file
+HASH_FIELD = 1
+STAGE_FIELD = 2
+MERGED_STAGE = '0'
 
 
 def name_status(data):
@@ -134,3 +138,20 @@ class Repository:
         with open(out, 'wb') as file:
             file.write(data)
         return path
+
+    def index_blob(self, out):
+        """Write the file as the index stages it into out; return its path,
+        None when the index lacks it; an unmerged file is refused."""
+        data = git.output(['ls-files', '--stage', '-z', '--', self.path], self.top,
+                          'the index is not read', read_only=True)
+        # an entry: <mode> <hash> <stage>\t<path>
+        entries = [item.split('\t', 1)[0].split() for item in git.fields(data)]
+        if not entries:
+            return None
+        if any(entry[STAGE_FIELD] != MERGED_STAGE for entry in entries):
+            raise GitError('{} is unmerged: resolve the conflict first'.format(self.path))
+        data = git.output(['cat-file', 'blob', entries[0][HASH_FIELD]], self.top,
+                          'the file of the index is not read', read_only=True)
+        with open(out, 'wb') as file:
+            file.write(data)
+        return self.path

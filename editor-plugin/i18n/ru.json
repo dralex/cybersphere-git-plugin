@@ -18,5 +18,7 @@
   "The states, the transitions and the comments changed since the revision, the unsaved edits included": "Состояния, переходы и комментарии, изменённые с ревизии, включая несохранённые правки",
   "Compare with a Revision...": "Сравнить с ревизией...",
   "The revision and the diagram with its unsaved edits side by side in a diff tab, the changes marked": "Ревизия и диаграмма с несохранёнными правками рядом во вкладке сравнения, изменения отмечены",
-  "Show the branch and the staged files, ask the message and commit them all": "Показать ветку и файлы индекса, запросить сообщение и зафиксировать их все"
+  "Show the branch and the staged files, ask the message and commit them all": "Показать ветку и файлы индекса, запросить сообщение и зафиксировать их все",
+  "Compare with the Index": "Сравнить с индексом",
+  "The staged diagram and the diagram with its unsaved edits side by side in a diff tab: what the commit takes": "Диаграмма из индекса и диаграмма с несохранёнными правками рядом во вкладке сравнения: что войдёт в коммит"
 }
