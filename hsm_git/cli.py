@@ -31,6 +31,17 @@ from hsm_git import __version__, GitError, EXIT_OK, EXIT_USAGE, EXIT_FAILED
 from hsm_git import actions
 
 
+def positive(value):
+    """A count of at least one."""
+    try:
+        number = int(value)
+    except ValueError:
+        number = 0
+    if number < 1:
+        raise argparse.ArgumentTypeError("'{}' is not a positive number".format(value))
+    return number
+
+
 def base_of(command):
     """The base of a diff: a revision or the index."""
     which = command.add_mutually_exclusive_group()
@@ -62,6 +73,10 @@ def parser():
     base_of(diff)
     diff.add_argument('--geometry', action='store_true', help='the geometry, the ids and the view state too')
     diff.add_argument('--diagnostics', metavar='FILE', help='also write the changes as the findings of the editor')
+    history = commands.add_parser('history', help='the last commits of the file, a rename followed')
+    history.add_argument('document')
+    history.add_argument('--count', type=positive, default=actions.HISTORY_COUNT, metavar='N',
+                         help='the number of commits, {} by default'.format(actions.HISTORY_COUNT))
     revision = commands.add_parser('revision', help='the diagram as a revision has it, into a file')
     revision.add_argument('document')
     base_of(revision)
@@ -93,6 +108,8 @@ def run(args):
         return session.run(args.document, args.request)
     elif args.command == 'commit':
         actions.commit(args.document, args.message_file)
+    elif args.command == 'history':
+        actions.history(args.document, args.count)
     elif args.command == 'diff':
         from hsm_git import diff  # pylint: disable=import-outside-toplevel
         if diff.is_diagram(args.current or args.document):

@@ -31,7 +31,9 @@ Added:
   diff --index`), an unmerged file refused;
 - the text tabs of the editor: Stage, Unstage, Commit... and Changes Since a
   Revision... for a plain text, Markdown, C, C++, C# or Python file, the
-  changes line by line with their lines in Diagnostics.
+  changes line by line with their lines in Diagnostics;
+- History: the last commits of the file, a rename followed (`hsm-git
+  history`).
 
 Open for the release:
 - the Debian package `Breaks: cyberiada-pro (<< X)`, X the first editor

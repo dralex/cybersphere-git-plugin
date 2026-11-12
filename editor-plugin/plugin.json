@@ -49,7 +49,12 @@
     { "id": "compare-index", "label": "Compare with the Index", "result": "diff", "when": ["git"],
       "modes": ["hsm", "fa", "inspection"], "parameters": [], "icon": "icons/compare.svg",
       "description": "The staged diagram and the diagram with its unsaved edits side by side in a diff tab: what the commit takes",
-      "argv": ["-m", "hsm_git", "revision", "${document}", "--index", "--output", "${output}"] }
+      "argv": ["-m", "hsm_git", "revision", "${document}", "--index", "--output", "${output}"] },
+    { "id": "history", "label": "History", "result": "log", "when": ["git"],
+      "modes": ["hsm", "fa", "inspection", "text", "markdown", "c", "cpp", "csharp", "python"],
+      "parameters": [],
+      "description": "The last commits of the file, a rename followed: the revisions to compare with",
+      "argv": ["-m", "hsm_git", "history", "${document}"] }
   ],
   "session": {
     "version": 1,

@@ -28,6 +28,7 @@ import contextlib
 import io
 import json
 import os
+import re
 import sys
 
 from testenv import Repo, report, git_found, binding_diff, write_text, SKIP, LIGHT, LIGHT_EDITED, DIAGRAM, TEST_DIR
@@ -224,6 +225,47 @@ def texts():
     return failed
 
 
+def commit_line(line, subject):
+    """A line of the history: the short hash, the date, the author, the subject."""
+    return re.match(r'^[0-9a-f]{7,}  \d{4}-\d{2}-\d{2}  Test  ' + re.escape(subject) + '$', line) is not None
+
+
+def histories():
+    """The commits of a file, a rename followed; the failures."""
+    failed = 0
+    repo = Repo()
+    try:
+        document = repo.put(DIAGRAM, LIGHT)
+        code, out, err = hsm_git(repo, 'history', document)
+        failed += report('no history before the first commit', code == EXIT_OK and
+                         out == '{} has no commits\n'.format(DIAGRAM), out + err)
+        repo.commit('base')
+        repo.put(DIAGRAM, LIGHT_EDITED)
+        repo.commit('edited')
+        code, out, err = hsm_git(repo, 'history', document)
+        lines = out.splitlines()
+        failed += report('the history, the newest first', code == EXIT_OK and len(lines) == 2 and
+                         commit_line(lines[0], 'edited') and commit_line(lines[1], 'base'), out + err)
+        repo.git('mv', DIAGRAM, 'diagrams/moved.graphml')
+        moved = repo.path('diagrams/moved.graphml')
+        code, out, err = hsm_git(repo, 'history', moved)
+        failed += report('the history of a staged rename', code == EXIT_OK and len(out.splitlines()) == 2, out + err)
+        repo.commit('moved')
+        code, out, err = hsm_git(repo, 'history', moved)
+        lines = out.splitlines()
+        failed += report('the history followed through the rename', code == EXIT_OK and len(lines) == 3 and
+                         commit_line(lines[0], 'moved') and commit_line(lines[2], 'base'), out + err)
+        code, out, err = hsm_git(repo, 'history', moved, '--count', '1')
+        failed += report('the count of the history', code == EXIT_OK and len(out.splitlines()) == 1, out + err)
+        new = repo.put('diagrams/new.graphml', LIGHT)
+        code, out, err = hsm_git(repo, 'history', new)
+        failed += report('no history of a new file', code == EXIT_OK and
+                         out == 'diagrams/new.graphml has no commits\n', out + err)
+    finally:
+        repo.cleanup()
+    return failed
+
+
 def diffs():
     """The text of the diff; the failures."""
     failed = 0
@@ -292,7 +334,7 @@ def main():
     if not git_found():
         print('skipped: no git')
         return SKIP
-    failed = actions() + revisions() + indexes() + texts()
+    failed = actions() + revisions() + indexes() + texts() + histories()
     if binding_diff():
         failed += diffs()
     else:

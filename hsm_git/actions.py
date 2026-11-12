@@ -20,14 +20,17 @@
 #
 #  -----------------------------------------------------------------------------
 
-"""Stage, unstage and the one-shot commit (docs/ARCHITECTURE.md, Stage and
-unstage, The commit)."""
+"""Stage, unstage, the one-shot commit and the history (docs/ARCHITECTURE.md,
+Stage and unstage, The commit, The history)."""
 
 import sys
 
 from hsm_git import GitError, EXIT_NOTHING_STAGED, EXIT_USAGE
 from hsm_git import git
 from hsm_git.repo import Repository
+
+HISTORY_COUNT = 30
+HISTORY_SEPARATOR = '  '
 
 
 def status_line(repo):
@@ -96,3 +99,13 @@ def commit(document, message_file):
     sys.stdout.flush()
     out = git.output(['commit', '-F', '-'], repo.top, 'the commit failed', stdin=commit_text(message))
     sys.stdout.write(git.text(out))
+
+
+def history(document, count=HISTORY_COUNT):
+    """The last commits of the file, a rename followed."""
+    repo = Repository.locate(document)
+    commits = repo.history(count)
+    if not commits:
+        print('{} has no commits'.format(repo.path))
+    for commit in commits:
+        print(HISTORY_SEPARATOR.join(commit))

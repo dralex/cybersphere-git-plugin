@@ -32,6 +32,10 @@ DETACHED = 'detached at {}'
 # the name-status letters followed by two paths: a rename, a copy
 TWO_PATHS = 'RC'
 RENAME_PATHS = 2
+# a commit of the history: the short hash, the date, the author, the subject
+LOG_SEPARATOR = '\x1f'
+LOG_FORMAT = '%h%x1f%ad%x1f%an%x1f%s'
+LOG_FIELDS = 4
 # the fields of an ls-files --stage entry; stage 0 is a merged file
 HASH_FIELD = 1
 STAGE_FIELD = 2
@@ -124,20 +128,36 @@ class Repository:
                 return paths[0]
         return None
 
+    def path_in(self, commit):
+        """The path the file has in the commit, a staged rename followed; None
+        when the commit lacks it."""
+        code, _, _ = git.run(['cat-file', '-e', '{}:{}'.format(commit, self.path)], self.top, read_only=True)
+        return self.path if code == 0 else self.renamed_from(commit)
+
     def blob(self, commit, out):
         """Write the file as the commit has it into out, exactly as stored;
         return the path it has there, None when the commit lacks it."""
-        path = self.path
-        code, _, _ = git.run(['cat-file', '-e', '{}:{}'.format(commit, path)], self.top, read_only=True)
-        if code != 0:
-            path = self.renamed_from(commit)
-            if path is None:
-                return None
+        path = self.path_in(commit)
+        if path is None:
+            return None
         data = git.output(['cat-file', 'blob', '{}:{}'.format(commit, path)], self.top,
                           'the file of the revision is not read', read_only=True)
         with open(out, 'wb') as file:
             file.write(data)
         return path
+
+    def history(self, count):
+        """The last count commits of the file, the newest first, a rename
+        followed: (hash, date, author, subject) tuples."""
+        if not self.has_commits:
+            return []
+        head = self.revision('HEAD')
+        path = self.path_in(head)
+        if path is None:
+            return []
+        out = git.output(['log', '--follow', '-n', str(count), '-z', '--date=short', '--format=' + LOG_FORMAT,
+                          head, '--', path], self.top, 'the history is not read', read_only=True)
+        return [tuple(record.split(LOG_SEPARATOR, LOG_FIELDS - 1)) for record in git.fields(out)]
 
     def index_blob(self, out):
         """Write the file as the index stages it into out; return its path,

@@ -32,11 +32,12 @@ Plugins > Git:
 | Changes Since a Revision... | prints the changed states, transitions, comments and metadata since the revision (`HEAD` by default); the Diagnostics dock lists them, a click selects the element |
 | Compare with a Revision... | opens a diff tab: the revision and the diagram with its unsaved edits side by side, the changes marked; Document > Refresh compares again |
 | Compare with the Index | the same diff tab with the staged diagram as the base: what the commit takes against the edits |
+| History | the last commits of the file, a rename followed: the revisions to compare with |
 
 The editor greys the actions out unless git is installed and the document is
 a file of a git work tree; Stage also needs it saved. In a text tab (plain
-text, Markdown, C, C++, C#, Python) Stage, Unstage, Commit... and Changes Since
-a Revision... work on the text, the changes line by line; the compares need a
+text, Markdown, C, C++, C#, Python) Stage, Unstage, Commit..., History and
+Changes Since a Revision... work on the text, the changes line by line; the compares need a
 diagram, in an HSM, FA or inspection tab, and an editor with the diff tabs.
 
 ## Installation
@@ -62,6 +63,7 @@ in the source tree without a copy; then `python3` needs the repository and the
     hsm-git diff diagrams/light.graphml --revision=HEAD~1
     hsm-git revision diagrams/light.graphml --revision=HEAD~1 --output light-old.graphml
     hsm-git diff diagrams/light.graphml --index
+    hsm-git history diagrams/light.graphml --count 10
     hsm-git stage diagrams/light.graphml
 
 ## Tests

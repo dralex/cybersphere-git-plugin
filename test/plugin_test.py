@@ -191,6 +191,9 @@ def text_part(binary, env, repo):
     failed += report('stage a text', code == 0 and '0 notes.md markdown active' in section(out, 'tabs') and
                      'A  ' + NOTES in out, out)
     repo.commit('notes')
+    code, out = batch(binary, env, notes, *run, PLUGIN + ':history', '--dump-plugin')
+    failed += report('the history of a text', code == 0 and
+                     any(line.endswith('  Test  notes') for line in section(out, 'plugin')), out)
     write_text(notes, NOTES_EDITED)
     code, out = batch(binary, env, notes, *run, PLUGIN + ':diff', '--dump-plugin')
     failed += report('the line diff of a text and its findings', code == 0 and '  +the light blinks' in out and
