@@ -27,6 +27,7 @@ elements, this module only writes the pairs."""
 
 import json
 import os
+import sys
 import tempfile
 
 from hsm_git import GitError
@@ -78,9 +79,13 @@ def load(path):
     if path is None or not os.path.exists(path) or os.path.getsize(path) == 0:
         return cml.Document()
     document = cml.LocalDocument()
+    # the exceptions of the binding (XMLException, FormatException, ...) do not
+    # derive from its Exception: catch them all
+    errors = tuple(value for value in vars(cml).values()
+                   if isinstance(value, type) and issubclass(value, BaseException))
     try:
         document.open(path)
-    except cml.Exception as error:
+    except errors as error:
         raise GitError('the diagram {} is not read: {}'.format(os.path.basename(path), error)) from error
     return document
 
@@ -466,6 +471,36 @@ def text(old, new, result, revision, geometry=False, findings=None):
     if findings is not None:
         findings.extend(out.findings)
     return out.lines
+
+
+def listing(document):
+    """The lines of the listing of a document: the text of a diff against an
+    empty document without its marks and its summary."""
+    empty = binding().Document()
+    lines = text(empty, document, compare(empty, document), '')
+    if len(lines) == 1:
+        return []    # the summary of an empty document
+    # every line is added but the context line of the metainformation
+    return [line[len(ADDED):] for line in lines[:-1]]
+
+
+def textconv(path):
+    """Print the listing of a diagram file, the textconv driver of git; a file
+    the library cannot read is printed as it is, so that git still diffs it."""
+    try:
+        lines = listing(load(path))
+    except GitError as error:
+        sys.stderr.write('hsm-git textconv: {}: {}\n'.format(os.path.basename(path), error))
+        with open(path, 'rb') as file:
+            data = file.read()
+        sys.stdout.flush()
+        if hasattr(sys.stdout, 'buffer'):
+            sys.stdout.buffer.write(data)
+        else:
+            sys.stdout.write(data.decode('utf-8', 'replace'))
+        return
+    for line in lines:
+        print(line)
 
 
 def write_findings(path, findings):

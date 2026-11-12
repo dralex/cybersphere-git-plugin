@@ -37,8 +37,9 @@ Plugins > Git:
 The editor greys the actions out unless git is installed and the document is
 a file of a git work tree; Stage also needs it saved. In a text tab (plain
 text, Markdown, C, C++, C#, Python) Stage, Unstage, Commit..., History and
-Changes Since a Revision... work on the text, the changes line by line; the compares need a
-diagram, in an HSM, FA or inspection tab, and an editor with the diff tabs.
+Changes Since a Revision... work on the text, the changes line by line; the
+compares need a diagram, in an HSM, FA or inspection tab, and an editor with
+the diff tabs.
 
 ## Installation
 
@@ -65,6 +66,15 @@ in the source tree without a copy; then `python3` needs the repository and the
     hsm-git diff diagrams/light.graphml --index
     hsm-git history diagrams/light.graphml --count 10
     hsm-git stage diagrams/light.graphml
+
+## git diff on the command line
+
+`hsm-git textconv` lets `git diff` and `git log -p` show a diagram by its
+states, transitions and comments instead of its GraphML lines:
+
+    echo '*.graphml diff=cyberiada' >> .gitattributes
+    git config diff.cyberiada.textconv "hsm-git textconv"
+    git config diff.cyberiada.cachetextconv true
 
 ## Tests
 

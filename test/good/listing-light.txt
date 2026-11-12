@@ -1,0 +1,25 @@
+state machine Light
+  initial
+  state Red
+    entry: led.on(RED)
+  state Yellow
+    entry: led.on(YELLOW)
+  state Green
+    entry: led.on(GREEN)
+  state Night
+    state Dark
+      entry: led.off()
+  comment
+    text: the main cycle
+  transition initial -> Red
+  transition Red -> Yellow [TICK]
+    do: timer.start(3000)
+  transition Yellow -> Green [TICK]
+  transition Green -> Red [TICK]
+  transition Red -> Night [NIGHT]
+  transition Night -> Red [DAY]
+  link comment -> Red
+meta
+  standardVersion: 1.0
+  name: light
+  platform: ArduinoUno

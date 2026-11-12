@@ -33,7 +33,11 @@ Added:
   Revision... for a plain text, Markdown, C, C++, C# or Python file, the
   changes line by line with their lines in Diagnostics;
 - History: the last commits of the file, a rename followed (`hsm-git
-  history`).
+  history`);
+- `hsm-git textconv`: the textconv driver of git, `git diff` and `git log -p`
+  show a diagram by its elements;
+- a diagram the library cannot read fails the diff with one line: the
+  exceptions of the binding do not derive from `CyberiadaML.Exception`.
 
 Open for the release:
 - the Debian package `Breaks: cyberiada-pro (<< X)`, X the first editor

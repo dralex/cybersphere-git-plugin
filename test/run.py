@@ -32,12 +32,13 @@ import re
 import sys
 
 from testenv import Repo, report, git_found, binding_diff, write_text, SKIP, LIGHT, LIGHT_EDITED, DIAGRAM, TEST_DIR
-from testenv import NOTES, NOTES_TEXT, NOTES_EDITED
+from testenv import NOTES, NOTES_TEXT, NOTES_EDITED, REPOSITORY
 
 from hsm_git import cli, textdiff, EXIT_OK, EXIT_USAGE, EXIT_NOTHING_STAGED, EXIT_FAILED  # pylint: disable=wrong-import-order
 
 GOOD_DIFF = os.path.join(TEST_DIR, 'good', 'diff-light.txt')
 GOOD_TEXT_DIFF = os.path.join(TEST_DIR, 'good', 'diff-text.txt')
+GOOD_LISTING = os.path.join(TEST_DIR, 'good', 'listing-light.txt')
 
 
 def hsm_git(repo, *args):
@@ -329,6 +330,40 @@ def diffs():
     return failed
 
 
+def textconvs():
+    """The listing of a diagram and the textconv driver of git; the failures."""
+    failed = 0
+    repo = Repo()
+    try:
+        code, out, err = hsm_git(repo, 'textconv', LIGHT)
+        with open(GOOD_LISTING, encoding='utf-8') as file:
+            good = file.read()
+        failed += report('the listing of a diagram', code == EXIT_OK and out == good, out + err)
+        empty = write_text(os.path.join(repo.tmp, 'empty.graphml'), '')
+        code, out, err = hsm_git(repo, 'textconv', empty)
+        failed += report('the listing of an empty file', code == EXIT_OK and out == '', out + err)
+        broken = write_text(os.path.join(repo.tmp, 'broken.graphml'), 'not a diagram\n')
+        code, out, err = hsm_git(repo, 'textconv', broken)
+        failed += report('a file not read shown as it is', code == EXIT_OK and out == 'not a diagram\n' and
+                         'broken.graphml' in err, out + err)
+        # the driver as a user configures it; the modules of this repository
+        repo.put('.gitattributes', write_text(os.path.join(repo.tmp, 'attributes'), '*.graphml diff=cyberiada\n'))
+        repo.git('config', 'diff.cyberiada.textconv', '"{}" -m hsm_git textconv'.format(sys.executable))
+        repo.env['PYTHONPATH'] = os.pathsep.join(p for p in (REPOSITORY, os.environ.get('PYTHONPATH')) if p)
+        repo.put(DIAGRAM, LIGHT)
+        repo.commit()
+        repo.put(DIAGRAM, LIGHT_EDITED)
+        lines = repo.git('diff', DIAGRAM).splitlines()
+        failed += report('git diff through the textconv driver', '+  state Blink' in lines and
+                         '-  state Green' in lines and not any('<data' in line for line in lines), '\n'.join(lines))
+        code, out, err = hsm_git(repo, 'diff', repo.path(DIAGRAM), '--current', broken)
+        failed += report('a diagram not read fails with one line', code == EXIT_FAILED and
+                         'broken.graphml is not read' in err and 'Traceback' not in err, out + err)
+    finally:
+        repo.cleanup()
+    return failed
+
+
 def main():
     """All the tests; 77 without git."""
     if not git_found():
@@ -336,7 +371,7 @@ def main():
         return SKIP
     failed = actions() + revisions() + indexes() + texts() + histories()
     if binding_diff():
-        failed += diffs()
+        failed += diffs() + textconvs()
     else:
         print('skipped the diff: no CyberiadaML with Document.diff')
     return 1 if failed else 0

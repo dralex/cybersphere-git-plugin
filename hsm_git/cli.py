@@ -77,6 +77,8 @@ def parser():
     history.add_argument('document')
     history.add_argument('--count', type=positive, default=actions.HISTORY_COUNT, metavar='N',
                          help='the number of commits, {} by default'.format(actions.HISTORY_COUNT))
+    textconv = commands.add_parser('textconv', help='the diagram as its listing, the textconv driver of git')
+    textconv.add_argument('document', metavar='FILE')
     revision = commands.add_parser('revision', help='the diagram as a revision has it, into a file')
     revision.add_argument('document')
     base_of(revision)
@@ -117,6 +119,9 @@ def run(args):
         else:
             from hsm_git import textdiff  # pylint: disable=import-outside-toplevel
             textdiff.run(args.document, args.current, args.revision, args.diagnostics, args.index)
+    elif args.command == 'textconv':
+        from hsm_git import diff  # pylint: disable=import-outside-toplevel
+        diff.textconv(args.document)
     elif args.command == 'revision':
         from hsm_git import diff  # pylint: disable=import-outside-toplevel
         diff.write_revision(args.document, args.output, args.revision, args.index)
