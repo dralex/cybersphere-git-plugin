@@ -423,7 +423,10 @@ def write_revision(document, output, revision='HEAD'):
     """Write the diagram as the revision has it into output, the base of a
     diff tab of the editor (docs/ARCHITECTURE.md, The compare)."""
     repo = Repository.locate(document)
-    path = base(repo, revision, output)
+    try:
+        path = base(repo, revision, output)
+    except OSError as error:
+        raise GitError('the revision file is not written: {}'.format(error)) from error
     if path is None:
         print('{} is not in {}'.format(repo.path, revision))
     else:

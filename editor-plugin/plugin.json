@@ -38,7 +38,8 @@
       "argv": ["-m", "hsm_git", "diff", "${document}", "--current", "${input}", "--revision=${param:revision}",
                {"if": "geometry", "argv": ["--geometry"]}] },
     { "id": "compare", "label": "Compare with a Revision...", "result": "diff", "when": ["git"],
-      "modes": ["hsm", "fa", "inspection"], "parameters": ["revision"], "icon": "icons/compare.svg",
+      "modes": ["hsm", "fa", "inspection"], "parameters": ["revision"], "toolbar": true,
+      "icon": "icons/compare.svg",
       "description": "The revision and the diagram with its unsaved edits side by side in a diff tab, the changes marked",
       "argv": ["-m", "hsm_git", "revision", "${document}", "--revision=${param:revision}", "--output", "${output}"] }
   ],

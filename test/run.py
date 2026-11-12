@@ -136,6 +136,10 @@ def revisions():
         code, out, err = hsm_git(repo, 'revision', moved, '--revision=nope', '--output', output)
         failed += report('a missing revision for the file', code == EXIT_FAILED and "'nope' is not found" in err,
                          out + err)
+        unwritable = os.path.join(repo.tmp, 'no-such-dir', 'revision.graphml')
+        code, out, err = hsm_git(repo, 'revision', moved, '--output', unwritable)
+        failed += report('an unwritable output', code == EXIT_FAILED and 'is not written' in err and
+                         'Traceback' not in err, out + err)
     finally:
         repo.cleanup()
     return failed
