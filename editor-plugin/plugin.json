@@ -36,7 +36,7 @@
       "icon": "icons/diff.svg",
       "description": "The states, the transitions and the comments changed since the revision, the unsaved edits included",
       "argv": ["-m", "hsm_git", "diff", "${document}", "--current", "${input}", "--revision=${param:revision}",
-               {"if": "geometry", "argv": ["--geometry"]}] },
+               "--diagnostics", "${diagnostics}", {"if": "geometry", "argv": ["--geometry"]}] },
     { "id": "compare", "label": "Compare with a Revision...", "result": "diff", "when": ["git"],
       "modes": ["hsm", "fa", "inspection"], "parameters": ["revision"], "toolbar": true,
       "icon": "icons/compare.svg",

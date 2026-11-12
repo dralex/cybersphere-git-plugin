@@ -54,6 +54,7 @@ def parser():
     diff.add_argument('--current', metavar='FILE', help='the diagram to compare, the file by default')
     diff.add_argument('--revision', default='HEAD', help='the revision, HEAD by default')
     diff.add_argument('--geometry', action='store_true', help='the geometry, the ids and the view state too')
+    diff.add_argument('--diagnostics', metavar='FILE', help='also write the changes as the findings of the editor')
     revision = commands.add_parser('revision', help='the diagram as a revision has it, into a file')
     revision.add_argument('document')
     revision.add_argument('--revision', default='HEAD', help='the revision, HEAD by default')
@@ -87,7 +88,7 @@ def run(args):
         actions.commit(args.document, args.message_file)
     elif args.command == 'diff':
         from hsm_git import diff  # pylint: disable=import-outside-toplevel
-        diff.run(args.document, args.current, args.revision, args.geometry)
+        diff.run(args.document, args.current, args.revision, args.geometry, args.diagnostics)
     elif args.command == 'revision':
         from hsm_git import diff  # pylint: disable=import-outside-toplevel
         diff.write_revision(args.document, args.output, args.revision)

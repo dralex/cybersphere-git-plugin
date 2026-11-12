@@ -21,10 +21,11 @@
 #
 #  -----------------------------------------------------------------------------
 
-"""The revision file of a diagram, the documents of a diff and its text
-(docs/API.md, The text of a diff). The library pairs the elements, this module
-only writes the pairs."""
+"""The revision file of a diagram, the documents of a diff, its text and its
+findings, the listing (docs/API.md, The text of a diff). The library pairs the
+elements, this module only writes the pairs."""
 
+import json
 import os
 import tempfile
 
@@ -44,6 +45,9 @@ CONTEXT = '  '
 REMOVED = '- '
 ADDED = '+ '
 INDENT = '  '
+# the findings of the editor (PLUGIN-API.md, The diagnostics file)
+SEVERITY = 'info'
+RULES = {CONTEXT: 'changed', ADDED: 'added', REMOVED: 'removed'}
 
 
 def binding():
@@ -254,8 +258,27 @@ class Writer:
         self.old, self.new = sides
         self.geometry = geometry
         self.lines = []
+        self.findings = []
         # the summary: the changed, the added and the removed elements
         self.counts = {CONTEXT: 0, ADDED: 0, REMOVED: 0}
+
+    def finding(self, mark, element, message):
+        """A change for the Diagnostics of the editor, linked to an element of
+        the compared diagram when it is there."""
+        item = {'severity': SEVERITY, 'rule': RULES[mark], 'message': message}
+        if element:
+            item['element'] = element
+        self.findings.append(item)
+
+    def changed(self, element, heads, names):
+        """The finding of a changed pair: the old head when it differs, the
+        names of the differing lines."""
+        message = heads[1] + ' changed'
+        if heads[0] != heads[1]:
+            message += ' (was {})'.format(heads[0])
+        if names:
+            message += ': ' + ', '.join(names)
+        self.finding(CONTEXT, element, message)
 
     def visible(self, flags):
         """The differences the text shows: the geometry only when asked for."""
@@ -270,7 +293,12 @@ class Writer:
 
     def pair(self, heads, items, level):
         """A changed pair: the context or the changed head, then the differing
-        groups, the old ones first."""
+        groups, the old ones first; return the names of the differing groups."""
+        names = []
+        for item in [i for i in items[0] if i not in items[1]] + [i for i in items[1] if i not in items[0]]:
+            name = item[0].split(':', 1)[0].strip()
+            if name not in names:
+                names.append(name)
         if heads[0] == heads[1]:
             self.emit(CONTEXT, level, [heads[1]])
         else:
@@ -283,6 +311,7 @@ class Writer:
             if item not in items[0]:
                 self.emit(ADDED, level + 1, item)
         self.counts[CONTEXT] += 1
+        return names
 
     def single(self, mark, head, items, level):
         """An added or a removed element with all its lines."""
@@ -299,9 +328,17 @@ class Writer:
         name = sm.get_name() if sm is not None and sm.has_name() else (machine.second or machine.first)
         mark = ADDED if flags & self.cml.diffAdded else REMOVED if flags & self.cml.diffRemoved else CONTEXT
         self.emit(mark, level, ['state machine ' + name])
-        if flags & self.cml.diffTitle and old_sm is not None and new_sm is not None:
+        renamed = flags & self.cml.diffTitle and old_sm is not None and new_sm is not None
+        if renamed:
             self.emit(REMOVED, level + 1, ['name: ' + old_sm.get_name()])
             self.emit(ADDED, level + 1, ['name: ' + new_sm.get_name()])
+        if not flags:
+            return
+        element = new_sm.get_id() if new_sm is not None else None
+        if mark == CONTEXT:
+            self.changed(element, ('state machine ' + name,) * 2, ['name'] if renamed else [])
+        else:
+            self.finding(mark, element if mark == ADDED else None, 'state machine {} {}'.format(name, RULES[mark]))
 
     def node(self, entry, flags, level, shown):
         """A node with the states holding it as the context."""
@@ -318,12 +355,15 @@ class Writer:
         if flags & (self.cml.diffAdded | self.cml.diffRemoved):
             mark = ADDED if flags & self.cml.diffAdded else REMOVED
             self.single(mark, side.head(element), side.node_items(element, self.geometry, False), depth)
+            self.finding(mark, element.get_id() if mark == ADDED else None,
+                         '{} {}'.format(side.head(element), RULES[mark]))
             return
         first = self.old.element(entry.first)
         moved = bool(flags & self.cml.diffParent)
-        self.pair((self.old.head(first), self.new.head(element)),
-                  (self.old.node_items(first, self.geometry, moved),
-                   self.new.node_items(element, self.geometry, moved)), depth)
+        heads = (self.old.head(first), self.new.head(element))
+        names = self.pair(heads, (self.old.node_items(first, self.geometry, moved),
+                                  self.new.node_items(element, self.geometry, moved)), depth)
+        self.changed(element.get_id(), heads, names)
 
     def transition(self, entry, flags, level):
         """A transition."""
@@ -332,11 +372,14 @@ class Writer:
             mark = ADDED if side is self.new else REMOVED
             t = side.element(entry.second or entry.first)
             self.single(mark, side.transition_head(t), side.transition_items(t, self.geometry), level)
+            self.finding(mark, t.get_id() if mark == ADDED else None,
+                         '{} {}'.format(side.transition_head(t), RULES[mark]))
             return
         t1, t2 = self.old.element(entry.first), self.new.element(entry.second)
-        self.pair((self.old.transition_head(t1), self.new.transition_head(t2)),
-                  (self.old.transition_items(t1, self.geometry), self.new.transition_items(t2, self.geometry)),
-                  level)
+        heads = (self.old.transition_head(t1), self.new.transition_head(t2))
+        names = self.pair(heads, (self.old.transition_items(t1, self.geometry),
+                                  self.new.transition_items(t2, self.geometry)), level)
+        self.changed(t2.get_id(), heads, names)
 
     def link(self, entry, level):
         """A comment link."""
@@ -344,10 +387,13 @@ class Writer:
         head2 = self.new.link(entry.second_comment, entry.second) if entry.second else None
         if head1 is None and head2 is not None:
             self.single(ADDED, head2, [], level)
+            self.finding(ADDED, entry.second, head2 + ' added')
         elif head1 is not None and head2 is None:
             self.single(REMOVED, head1, [], level)
+            self.finding(REMOVED, None, head1 + ' removed')
         elif head1 is not None:
             self.pair((head1, head2), ([], []), level)
+            self.changed(entry.second, (head1, head2), [])
 
     def machine(self, machine, header):
         """The lines of one state machine: the nodes in the order of the diff,
@@ -381,11 +427,16 @@ class Writer:
             if m.in_second:
                 self.emit(ADDED, 1, ['{}: {}'.format(m.name, m.second)])
         self.counts[CONTEXT] += 1
+        names = []
+        for m in entries:
+            if m.name not in names:
+                names.append(m.name)
+        self.changed(None, ('meta', 'meta'), names)
 
 
-def text(old, new, result, revision, geometry=False):
+def text(old, new, result, revision, geometry=False, findings=None):
     """The lines of the diff of two documents after the header: the elements
-    and the summary."""
+    and the summary; the findings are appended to the list findings."""
     cml = binding()
     ids1 = [e.first for m in result.machines for e in m.elements if e.first]
     ids2 = [e.second for m in result.machines for e in m.elements if e.second]
@@ -402,7 +453,19 @@ def text(old, new, result, revision, geometry=False):
                                                                   out.counts[REMOVED]))
     else:
         out.lines.append('no changes since {}'.format(revision))
+    if findings is not None:
+        findings.extend(out.findings)
     return out.lines
+
+
+def write_findings(path, findings):
+    """The diagnostics file of the editor."""
+    try:
+        with open(path, 'w', encoding='utf-8') as file:
+            json.dump(findings, file, ensure_ascii=False, indent=1)
+            file.write('\n')
+    except OSError as error:
+        raise GitError('the findings are not written: {}'.format(error)) from error
 
 
 def base(repo, revision, out):
@@ -433,9 +496,9 @@ def write_revision(document, output, revision='HEAD'):
         print('{}:{}'.format(revision, path))
 
 
-def run(document, current=None, revision='HEAD', geometry=False):
+def run(document, current=None, revision='HEAD', geometry=False, diagnostics=None):
     """Print the changes of the diagram (the file, or current: the editor's
-    copy) since the revision."""
+    copy) since the revision; write their findings into diagnostics."""
     binding()
     repo = Repository.locate(document)
     with tempfile.TemporaryDirectory() as tmp:
@@ -448,5 +511,8 @@ def run(document, current=None, revision='HEAD', geometry=False):
         print('+++ ' + WORKING)
         old = load(blob)
         new = load(current if current is not None else document)
-        for line in text(old, new, compare(old, new, geometry), revision, geometry):
+        findings = []
+        for line in text(old, new, compare(old, new, geometry), revision, geometry, findings):
             print(line)
+    if diagnostics is not None:
+        write_findings(diagnostics, findings)

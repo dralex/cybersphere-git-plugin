@@ -194,6 +194,10 @@ def editor_part(binary, env, repo):
         code, out = batch(binary, env, document, *run, PLUGIN + ':diff', '--dump-plugin')
         failed += report('the diff', code == 0 and 'transition Red -> Yellow [TICK]' in out and
                          '+ state Blink' in out, out)
+        findings = section(out, 'diagnostics')
+        failed += report('the findings of the diff', 'count: 12' in findings and
+                         'info added n3: state Blink added' in findings and
+                         'info removed -: state Green removed' in findings, out)
     else:
         print('skipped the diff in the editor: no CyberiadaML with Document.diff')
     outside = os.path.join(repo.outside, 'light.graphml')

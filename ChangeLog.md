@@ -22,7 +22,10 @@ Added:
   the tab sharing the revision file and the pairs;
 - the actions work in the HSM, FA and inspection tabs of the editor
   (`modes`); the editor's `regionGeometry` marker is shown with the Geometry
-  option only, as the view state.
+  option only, as the view state;
+- the findings of Changes Since a Revision...: the changed elements in the
+  Diagnostics of the editor, a click selects one (`hsm-git diff
+  --diagnostics`).
 
 Open for the release:
 - the Debian package `Breaks: cyberiada-pro (<< X)`, X the first editor

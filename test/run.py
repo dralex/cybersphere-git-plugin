@@ -26,6 +26,7 @@ Document.diff."""
 
 import contextlib
 import io
+import json
 import os
 import sys
 
@@ -97,6 +98,12 @@ def actions():
     return failed
 
 
+def read_json(path):
+    """A JSON file of the run."""
+    with open(path, encoding='utf-8') as file:
+        return json.load(file)
+
+
 def same_bytes(first, second):
     """Two files hold the same bytes."""
     with open(first, 'rb') as one, open(second, 'rb') as two:
@@ -165,9 +172,22 @@ def diffs():
         with open(GOOD_DIFF, encoding='utf-8') as file:
             good = file.read()
         failed += report('the diff of the edited light', code == EXIT_OK and out == good, out + err)
-        code, out, err = hsm_git(repo, 'diff', document, '--current', LIGHT)
+        findings = os.path.join(repo.tmp, 'diagnostics.json')
+        code, out, err = hsm_git(repo, 'diff', document, '--diagnostics', findings)
+        found = read_json(findings)
+        failed += report('the findings of the diff', code == EXIT_OK and len(found) == 12 and
+                         {'severity': 'info', 'rule': 'changed', 'element': 'n1',
+                          'message': 'state Red changed: color'} in found and
+                         {'severity': 'info', 'rule': 'added', 'element': 'n3', 'message': 'state Blink added'} in found and
+                         {'severity': 'info', 'rule': 'removed', 'message': 'state Green removed'} in found and
+                         {'severity': 'info', 'rule': 'changed',
+                          'element': 'n1-n5', 'message': 'transition Red -> Blink [NIGHT] changed '
+                                                         '(was transition Red -> Night [NIGHT])'} in found and
+                         {'severity': 'info', 'rule': 'changed', 'message': 'meta changed: platform'} in found,
+                         found)
+        code, out, err = hsm_git(repo, 'diff', document, '--current', LIGHT, '--diagnostics', findings)
         failed += report('the editor copy compared, not the file', code == EXIT_OK and
-                         out.splitlines()[-1] == 'no changes since HEAD', out + err)
+                         out.splitlines()[-1] == 'no changes since HEAD' and read_json(findings) == [], out + err)
         code, out, err = hsm_git(repo, 'diff', document, '--geometry')
         lines = out.splitlines()
         failed += report('the geometry', code == EXIT_OK and any(line.startswith('-   at: ') for line in lines) and

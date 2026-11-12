@@ -29,7 +29,7 @@ Plugins > Git:
 | Stage | `git add` of the saved diagram |
 | Unstage | takes the diagram out of the index, the file kept |
 | Commit... | lists the branch and the staged files, asks the message, commits the whole index |
-| Changes Since a Revision... | prints the changed states, transitions, comments and metadata since the revision (`HEAD` by default) |
+| Changes Since a Revision... | prints the changed states, transitions, comments and metadata since the revision (`HEAD` by default); the Diagnostics dock lists them, a click selects the element |
 | Compare with a Revision... | opens a diff tab: the revision and the diagram with its unsaved edits side by side, the changes marked; Document > Refresh compares again |
 
 The editor greys the actions out unless git is installed and the diagram is a
