@@ -28,7 +28,10 @@ Added:
   --diagnostics`);
 - Compare with the Index: the staged diagram as the base of a diff tab
   (`hsm-git revision --index`), the text diff against the index (`hsm-git
-  diff --index`), an unmerged file refused.
+  diff --index`), an unmerged file refused;
+- the text tabs of the editor: Stage, Unstage, Commit... and Changes Since a
+  Revision... for a plain text, Markdown, C, C++, C# or Python file, the
+  changes line by line with their lines in Diagnostics.
 
 Open for the release:
 - the Debian package `Breaks: cyberiada-pro (<< X)`, X the first editor

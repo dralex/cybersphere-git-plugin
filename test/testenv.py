@@ -39,12 +39,24 @@ SKIP = 77
 LIGHT = os.path.join(TEST_DIR, 'diagrams', 'light.graphml')
 LIGHT_EDITED = os.path.join(TEST_DIR, 'diagrams', 'light-edited.graphml')
 DIAGRAM = 'diagrams/light.graphml'
+# a text of a text tab
+NOTES = 'docs/notes.md'
+NOTES_TEXT = '# Notes\n\nthe light is red\nthe end\n'
+NOTES_EDITED = '# Notes\n\nthe light blinks\nat night\nthe end\n'
 
 
 def report(name, ok, detail=''):
     """One line per check; the count of the failures."""
     print(('ok   ' if ok else 'FAIL ') + name + ('' if ok else '\n' + str(detail)))
     return 0 if ok else 1
+
+
+def write_text(path, content, end='\n'):
+    """A text file with the given line ends."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, 'w', encoding='utf-8', newline=end) as file:
+        file.write(content)
+    return path
 
 
 def git_found():

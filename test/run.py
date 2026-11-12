@@ -30,11 +30,13 @@ import json
 import os
 import sys
 
-from testenv import Repo, report, git_found, binding_diff, SKIP, LIGHT, LIGHT_EDITED, DIAGRAM, TEST_DIR
+from testenv import Repo, report, git_found, binding_diff, write_text, SKIP, LIGHT, LIGHT_EDITED, DIAGRAM, TEST_DIR
+from testenv import NOTES, NOTES_TEXT, NOTES_EDITED
 
-from hsm_git import cli, EXIT_OK, EXIT_USAGE, EXIT_NOTHING_STAGED, EXIT_FAILED  # pylint: disable=wrong-import-order
+from hsm_git import cli, textdiff, EXIT_OK, EXIT_USAGE, EXIT_NOTHING_STAGED, EXIT_FAILED  # pylint: disable=wrong-import-order
 
 GOOD_DIFF = os.path.join(TEST_DIR, 'good', 'diff-light.txt')
+GOOD_TEXT_DIFF = os.path.join(TEST_DIR, 'good', 'diff-text.txt')
 
 
 def hsm_git(repo, *args):
@@ -181,6 +183,47 @@ def indexes():
     return failed
 
 
+def texts():
+    """The line diff of a text and its findings, without the binding; the
+    failures."""
+    failed = 0
+    repo = Repo()
+    try:
+        notes = write_text(repo.path(NOTES), NOTES_TEXT)
+        code, out, err = hsm_git(repo, 'diff', notes)
+        failed += report('a new text: every line added', code == EXIT_OK and
+                         out.startswith('--- /dev/null ({} is not in HEAD)\n+++ working\n@@ -0,0 +1,4 @@\n'
+                                        .format(NOTES)) and
+                         out.splitlines()[-1] == 'lines: 4 added, 0 removed', out + err)
+        repo.commit()
+        write_text(notes, NOTES_EDITED)
+        findings = os.path.join(repo.tmp, 'diagnostics.json')
+        code, out, err = hsm_git(repo, 'diff', notes, '--diagnostics', findings)
+        with open(GOOD_TEXT_DIFF, encoding='utf-8') as file:
+            good = file.read()
+        failed += report('the line diff of the edited text', code == EXIT_OK and out == good, out + err)
+        failed += report('the findings of a text', read_json(findings) == [
+            {'severity': 'info', 'rule': 'changed', 'line': 3, 'message': 'lines 3-4 changed'}], read_json(findings))
+        copy = write_text(os.path.join(repo.tmp, 'input', 'input.md'), NOTES_TEXT, '\r\n')
+        code, out, err = hsm_git(repo, 'diff', notes, '--current', copy)
+        failed += report('the editor copy compared, its line ends ignored', code == EXIT_OK and
+                         out.splitlines()[-1] == 'no changes since HEAD', out + err)
+        repo.git('add', NOTES)
+        code, out, err = hsm_git(repo, 'diff', notes, '--index')
+        failed += report('a text against the index', code == EXIT_OK and
+                         out.startswith('--- index:{}\n'.format(NOTES)) and
+                         out.splitlines()[-1] == 'no changes since the index', out + err)
+        failed += report('the findings of the kinds of blocks', textdiff.findings_of(['a', 'b', 'c'], ['a', 'c']) == [
+            {'severity': 'info', 'rule': 'removed', 'line': 2, 'message': '1 line removed'}] and
+                         textdiff.findings_of(['a'], ['a', 'b', 'c']) == [
+            {'severity': 'info', 'rule': 'added', 'line': 2, 'message': 'lines 2-3 added'}] and
+                         textdiff.findings_of(['a', 'b', 'c'], ['a'])[0]['line'] == 1)
+        failed += report('a text needs no CyberiadaML', 'CyberiadaML' not in sys.modules)
+    finally:
+        repo.cleanup()
+    return failed
+
+
 def diffs():
     """The text of the diff; the failures."""
     failed = 0
@@ -249,7 +292,7 @@ def main():
     if not git_found():
         print('skipped: no git')
         return SKIP
-    failed = actions() + revisions() + indexes()
+    failed = actions() + revisions() + indexes() + texts()
     if binding_diff():
         failed += diffs()
     else:

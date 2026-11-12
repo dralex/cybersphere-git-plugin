@@ -1,0 +1,10 @@
+--- HEAD:docs/notes.md
++++ working
+@@ -1,4 +1,5 @@
+ # Notes
+ 
+-the light is red
++the light blinks
++at night
+ the end
+lines: 2 added, 1 removed

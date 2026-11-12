@@ -34,7 +34,8 @@ import subprocess
 import sys
 import tempfile
 
-from testenv import Repo, report, git_found, binding_diff, SKIP, REPOSITORY, TEST_DIR, LIGHT, LIGHT_EDITED, DIAGRAM
+from testenv import Repo, report, git_found, binding_diff, write_text, SKIP, REPOSITORY, TEST_DIR, LIGHT, LIGHT_EDITED, DIAGRAM
+from testenv import NOTES, NOTES_TEXT, NOTES_EDITED
 
 import hsm_git.plugin  # pylint: disable=wrong-import-position,wrong-import-order
 
@@ -180,6 +181,25 @@ def compare_part(binary, env, repo, document):
     return failed
 
 
+def text_part(binary, env, repo):
+    """A Markdown file in a text tab: staged, its line diff and findings, no
+    compare; the failures."""
+    failed = 0
+    notes = write_text(repo.path(NOTES), NOTES_TEXT)
+    run = ['--plugin-path', '.', '--run-plugin']
+    code, out = batch(binary, env, notes, *run, PLUGIN + ':stage', '--dump-plugin', '--dump-tabs')
+    failed += report('stage a text', code == 0 and '0 notes.md markdown active' in section(out, 'tabs') and
+                     'A  ' + NOTES in out, out)
+    repo.commit('notes')
+    write_text(notes, NOTES_EDITED)
+    code, out = batch(binary, env, notes, *run, PLUGIN + ':diff', '--dump-plugin')
+    failed += report('the line diff of a text and its findings', code == 0 and '  +the light blinks' in out and
+                     'info changed - line 3: lines 3-4 changed' in section(out, 'diagnostics'), out)
+    code, out = batch(binary, env, notes, *run, PLUGIN + ':compare', '--dump-plugin')
+    failed += report('no compare of a text', code != 0 and 'the action works in: HSM diagram' in out, out)
+    return failed
+
+
 def editor_part(binary, env, repo):
     """The plugin in the editor; the failures."""
     failed = 0
@@ -214,7 +234,8 @@ def editor_part(binary, env, repo):
     failed += report('a file outside a work tree refused by the editor', code != 0 and
                      'error: the document is not in a git repository' in out, out)
     code, out = batch(binary, env, outside, *run, PLUGIN + ':stage', '--dump-plugin')
-    failed += report('the reason of Stage', code != 0 and 'error: Save the diagram of a git work tree' in out, out)
+    failed += report('the reason of Stage', code != 0 and 'error: Save the file of a git work tree' in out, out)
+    failed += text_part(binary, env, repo)
     return failed
 
 

@@ -33,9 +33,11 @@ Plugins > Git:
 | Compare with a Revision... | opens a diff tab: the revision and the diagram with its unsaved edits side by side, the changes marked; Document > Refresh compares again |
 | Compare with the Index | the same diff tab with the staged diagram as the base: what the commit takes against the edits |
 
-The editor greys the actions out unless git is installed and the diagram is a
-file of a git work tree, in an HSM, FA or inspection tab; Stage also needs the
-diagram saved. Compare with a Revision... needs an editor with the diff tabs.
+The editor greys the actions out unless git is installed and the document is
+a file of a git work tree; Stage also needs it saved. In a text tab (plain
+text, Markdown, C, C++, C#, Python) Stage, Unstage, Commit... and Changes Since
+a Revision... work on the text, the changes line by line; the compares need a
+diagram, in an HSM, FA or inspection tab, and an editor with the diff tabs.
 
 ## Installation
 

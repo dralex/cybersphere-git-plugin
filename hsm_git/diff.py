@@ -34,6 +34,8 @@ from hsm_git.repo import Repository
 
 WORKING = 'working'
 NO_FILE = '/dev/null'
+# a diagram file; any other file is compared as a text
+DIAGRAM_EXTENSION = '.graphml'
 # the index as the base: its label in the header, its name in the text
 INDEX = 'index'
 INDEX_NAME = 'the index'
@@ -51,6 +53,11 @@ INDENT = '  '
 # the findings of the editor (PLUGIN-API.md, The diagnostics file)
 SEVERITY = 'info'
 RULES = {CONTEXT: 'changed', ADDED: 'added', REMOVED: 'removed'}
+
+
+def is_diagram(path):
+    """The file is compared as a diagram, not as a text."""
+    return os.path.splitext(path)[1].lower() == DIAGRAM_EXTENSION
 
 
 def binding():

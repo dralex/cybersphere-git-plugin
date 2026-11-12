@@ -56,7 +56,7 @@ def parser():
     how.add_argument('--message-file', metavar='FILE', help='the first line of FILE is the message')
     how.add_argument('--session', action='store_true', help='the commit session of the editor')
     commit.add_argument('--request', metavar='FILE', help='the request.json of the editor')
-    diff = commands.add_parser('diff', help='the changes of the diagram since a revision')
+    diff = commands.add_parser('diff', help='the changes of the diagram or the text since a revision')
     diff.add_argument('document')
     diff.add_argument('--current', metavar='FILE', help='the diagram to compare, the file by default')
     base_of(diff)
@@ -95,7 +95,11 @@ def run(args):
         actions.commit(args.document, args.message_file)
     elif args.command == 'diff':
         from hsm_git import diff  # pylint: disable=import-outside-toplevel
-        diff.run(args.document, args.current, args.revision, args.geometry, args.diagnostics, args.index)
+        if diff.is_diagram(args.current or args.document):
+            diff.run(args.document, args.current, args.revision, args.geometry, args.diagnostics, args.index)
+        else:
+            from hsm_git import textdiff  # pylint: disable=import-outside-toplevel
+            textdiff.run(args.document, args.current, args.revision, args.diagnostics, args.index)
     elif args.command == 'revision':
         from hsm_git import diff  # pylint: disable=import-outside-toplevel
         diff.write_revision(args.document, args.output, args.revision, args.index)
