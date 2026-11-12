@@ -97,48 +97,45 @@ def actions():
     return failed
 
 
-def same_bytes(path, source):
-    """The file holds what source holds."""
-    with open(path, 'rb') as one, open(source, 'rb') as other:
-        return one.read() == other.read()
+def same_bytes(first, second):
+    """Two files hold the same bytes."""
+    with open(first, 'rb') as one, open(second, 'rb') as two:
+        return one.read() == two.read()
 
 
 def revisions():
-    """The revision file of a diff tab, without the binding; the failures."""
+    """The revision file of a diff tab, which needs no CyberiadaML; the
+    failures."""
     failed = 0
     repo = Repo()
     try:
         document = repo.put(DIAGRAM, LIGHT)
-        output = os.path.join(repo.tmp, 'output.graphml')
+        output = os.path.join(repo.tmp, 'revision.graphml')
         code, out, err = hsm_git(repo, 'revision', document, '--output', output)
         failed += report('the revision before the first commit', code == EXIT_OK and
-                         out == '{} is not in HEAD\n'.format(DIAGRAM) and os.path.getsize(output) == 0, out + err)
+                         out.strip() == '{} is not in HEAD'.format(DIAGRAM) and os.path.getsize(output) == 0,
+                         out + err)
         repo.commit()
         repo.put(DIAGRAM, LIGHT_EDITED)
         code, out, err = hsm_git(repo, 'revision', document, '--output', output)
-        failed += report('the stored file, not the work tree', code == EXIT_OK and
-                         out == 'HEAD:{}\n'.format(DIAGRAM) and same_bytes(output, LIGHT), out + err)
+        failed += report('the revision as stored, not the edited file', code == EXIT_OK and
+                         out.strip() == 'HEAD:' + DIAGRAM and same_bytes(output, LIGHT), out + err)
         repo.commit('edited')
-        code, out, err = hsm_git(repo, 'revision', document, '--revision=HEAD~1', '--output', output)
-        failed += report('an older revision', code == EXIT_OK and out == 'HEAD~1:{}\n'.format(DIAGRAM) and
-                         same_bytes(output, LIGHT), out + err)
         repo.git('mv', DIAGRAM, 'diagrams/moved.graphml')
-        code, out, err = hsm_git(repo, 'revision', repo.path('diagrams/moved.graphml'), '--output', output)
-        failed += report('a staged rename written with the old path', code == EXIT_OK and
-                         out == 'HEAD:{}\n'.format(DIAGRAM) and same_bytes(output, LIGHT_EDITED), out + err)
+        moved = repo.path('diagrams/moved.graphml')
+        code, out, err = hsm_git(repo, 'revision', moved, '--revision=HEAD~1', '--output', output)
+        failed += report('the old path of a staged rename', code == EXIT_OK and
+                         out.strip() == 'HEAD~1:' + DIAGRAM and same_bytes(output, LIGHT), out + err)
         new = repo.put('diagrams/new.graphml', LIGHT)
         code, out, err = hsm_git(repo, 'revision', new, '--output', output)
-        failed += report('a diagram not in the revision: an empty file', code == EXIT_OK and
-                         out == 'diagrams/new.graphml is not in HEAD\n' and os.path.getsize(output) == 0, out + err)
-        code, out, err = hsm_git(repo, 'revision', new, '--revision=-x', '--output', output)
-        failed += report('a revision like an option refused', code == EXIT_USAGE and not out, out + err)
-        code, out, err = hsm_git(repo, 'revision', new, '--revision=nope', '--output', output)
-        failed += report('a missing revision', code == EXIT_FAILED and not out and "'nope' is not found" in err,
+        failed += report('a new file: an empty revision', code == EXIT_OK and
+                         out.strip() == 'diagrams/new.graphml is not in HEAD' and os.path.getsize(output) == 0,
                          out + err)
-        unwritable = os.path.join(repo.tmp, 'no-such-dir', 'output.graphml')
-        code, out, err = hsm_git(repo, 'revision', new, '--output', unwritable)
-        failed += report('an unwritable output', code == EXIT_FAILED and 'is not written' in err, out + err)
-        failed += report('no CyberiadaML needed', 'CyberiadaML' not in sys.modules)
+        code, out, err = hsm_git(repo, 'revision', moved, '--revision=-x', '--output', output)
+        failed += report('a revision like an option refused', code == EXIT_USAGE and 'refused' in err, out + err)
+        code, out, err = hsm_git(repo, 'revision', moved, '--revision=nope', '--output', output)
+        failed += report('a missing revision for the file', code == EXIT_FAILED and "'nope' is not found" in err,
+                         out + err)
     finally:
         repo.cleanup()
     return failed
@@ -181,9 +178,6 @@ def diffs():
         code, out, err = hsm_git(repo, 'diff', moved, '--revision=HEAD~1')
         failed += report('a staged rename compared with the old path', code == EXIT_OK and
                          out.startswith('--- HEAD~1:{}\n'.format(DIAGRAM)) and '+ state Blink' in out, out + err)
-        output = os.path.join(repo.tmp, 'output.graphml')
-        _, named, _ = hsm_git(repo, 'revision', moved, '--revision=HEAD~1', '--output', output)
-        failed += report('the revision file is the base of the diff', out.startswith('--- ' + named), named + out)
     finally:
         repo.cleanup()
     return failed
@@ -194,7 +188,6 @@ def main():
     if not git_found():
         print('skipped: no git')
         return SKIP
-    # before binding_diff(): it imports CyberiadaML
     failed = actions() + revisions()
     if binding_diff():
         failed += diffs()

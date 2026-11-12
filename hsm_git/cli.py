@@ -20,8 +20,8 @@
 #
 #  -----------------------------------------------------------------------------
 
-"""hsm-git: stage, unstage, commit and diff of a diagram (docs/API.md, The
-command line)."""
+"""hsm-git: stage, unstage, commit and diff of a diagram, the revision file of
+a diff tab (docs/API.md, The command line)."""
 
 import argparse
 import os
@@ -54,10 +54,11 @@ def parser():
     diff.add_argument('--current', metavar='FILE', help='the diagram to compare, the file by default')
     diff.add_argument('--revision', default='HEAD', help='the revision, HEAD by default')
     diff.add_argument('--geometry', action='store_true', help='the geometry, the ids and the view state too')
-    revision = commands.add_parser('revision', help='the diagram of a revision into a file, the base of a diff tab')
+    revision = commands.add_parser('revision', help='the diagram as a revision has it, into a file')
     revision.add_argument('document')
     revision.add_argument('--revision', default='HEAD', help='the revision, HEAD by default')
-    revision.add_argument('--output', metavar='FILE', required=True, help='the file to write, empty without the diagram')
+    revision.add_argument('--output', metavar='FILE', required=True,
+                          help='the file to write, empty when the revision lacks the diagram')
     return main_parser
 
 
@@ -89,7 +90,7 @@ def run(args):
         diff.run(args.document, args.current, args.revision, args.geometry)
     elif args.command == 'revision':
         from hsm_git import diff  # pylint: disable=import-outside-toplevel
-        diff.write_revision(args.document, args.revision, args.output)
+        diff.write_revision(args.document, args.output, args.revision)
     return EXIT_OK
 
 

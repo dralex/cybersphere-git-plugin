@@ -55,7 +55,7 @@ Python 3 standard library.
 | R5 | Read the revision in every format the library reads: CyberiadaML-GraphML and the yEd dialects. | The diff |
 | R6 | Run from the command line and as an editor plugin; ask nothing on stdin outside the session. | The command line, The plugin |
 | R7 | Run on Python 3.8+ and git 2.23+, on Linux, Windows and macOS. | Testing |
-| R8 | Show the same changes on the canvas: a diff tab of the editor, the revision against the diagram with its unsaved edits (stage 2). | The compare |
+| R8 | Show the same changes on the canvas: a diff tab of the editor, the revision against the diagram with its unsaved edits. | The compare |
 
 ## Conditions
 
@@ -68,7 +68,7 @@ git can tell stays in the run.
 | git is installed | `requires.programs: ["git"]` | the editor, at the scan (`EDIT-PLUG-50`) |
 | the document is a file in a git work tree | `when: ["git"]` | the editor: a `.git` directory in the file's directory or above it, no process (`EDIT-PLUG-55`) |
 | Stage: the diagram is saved | `when: ["saved", "git"]` | the editor (`EDIT-PLUG-52`) |
-| the tab holds a diagram, edited or inspected (stage 2) | `modes: ["hsm", "fa", "inspection"]` | the editor (`EDIT-PLUG-56`) |
+| the tab holds a diagram, edited or inspected | `modes: ["hsm", "fa", "inspection"]` | the editor (`EDIT-PLUG-56`) |
 | the work tree of the file, the revision, a staged change | - | the run: one line on stderr, the exit code |
 
 The editor looks for the folder instead of running `git rev-parse`, so that
@@ -170,8 +170,10 @@ unsaved edits included - with the file in a revision, `HEAD` by default.
   against an empty document, everything added.
 * The library pairs the elements of the two documents and tells what differs
   in each pair; the plugin writes the pairs as text (`API.md`, The text of a
-  diff). The geometry, the ids and the editor's view state are left out unless
-  the Geometry option is on.
+  diff). The geometry, the ids and the editor's own metainformation - the
+  view state and the `regionGeometry` marker it writes at a save - are left
+  out unless the Geometry option is on, as in the diff tab of the editor, so
+  the two show the same pairs.
 * The comparison needs `Document.diff` of the binding: without it the diff
   fails with one line naming the package; the other actions work without
   `CyberiadaML`.
@@ -205,10 +207,10 @@ editor, The diff tab).
 * The tab is labelled by the revision parameter (`HEAD`). Refresh runs the
   action again, so after a commit `HEAD` is the new revision.
 * The geometry is the tab's own option (Document > Geometry), not a parameter.
-* An editor before the diff tabs rejects the whole plugin when one action has
-  a `diff` result (`PLUGIN-API.md`, Results). So 0.1 ships `hsm-git revision`
-  only; the action comes in stage 2 with the Debian `Breaks` of the editors
-  without the diff tabs. The text diff works with every editor.
+* An editor before the diff tabs rejects a descriptor with a `diff` result
+  (`PLUGIN-API.md`, Results): the Debian package `Breaks` the editors without
+  them (the version is set at the release, `ChangeLog.md`), and the plugin
+  keeps the text diff for every editor.
 
 ## The command line
 
@@ -234,11 +236,11 @@ editor, The diff tab).
 | Commit... | session, supervised | `git` | `commit ${document} --session --request ${request}` |
 | Commit... | one-shot, log; replaced by the session | `git` | `commit ${document} --message-file ${param-file:message}` |
 | Changes Since a Revision... | one-shot, log | `git` | `diff ${document} --current ${input} --revision=${param:revision}` |
-| Compare with a Revision... (stage 2) | one-shot, diff | `git` | `revision ${document} --revision=${param:revision} --output ${output}` |
+| Compare with a Revision... | one-shot, diff | `git` | `revision ${document} --revision=${param:revision} --output ${output}` |
 
-* From stage 2 every action lists `modes: ["hsm", "fa", "inspection"]`: an
-  inspected diagram is staged and compared as an edited one; the text and the
-  diff tabs get no git action. The editors before the modes warn of the field.
+* Every action lists `modes: ["hsm", "fa", "inspection"]`: an inspected
+  diagram is staged and compared as an edited one; the text and the diff tabs
+  get no git action.
 * No action saves the document: Stage needs it saved, the diffs read
   `${input}`, the commit warns. `cwd: document` is not used because it saves.
 * `--revision=` is joined to its value, so that a revision cannot become an
@@ -267,26 +269,23 @@ editor, The diff tab).
   the test, with a git configuration of their own (no user or system
   configuration leaks in); the text of the diff of the example diagrams is
   compared with `test/good/`; `revision` writes the stored file, the old one
-  of a staged rename, an empty one for a new file, without `CyberiadaML`.
+  of a staged rename, an empty one for a new file.
 * `test/session_test.py` - the commit session driven over its pipes: accept,
   decline, an empty answer, a stop during the question, nothing staged.
 * `test/plugin_test.py` - the plugin in the batch mode of CyberiadaPro:
   the list of the plugins, Stage, the diff, the commit session from a session
   script; skipped without an editor that starts, or with one before the `git`
-  token. Stage 2, the compare: the `== diff` section of `--run-plugin
-  git:compare --dump` against `test/good/`, its pairs those of the text diff;
-  skipped with an editor before the diff tabs.
+  token. The compare: the `== diff` section of `--run-plugin git:compare
+  --dump` against `test/good/`, its pairs those of the text diff; skipped with
+  an editor before the diff tabs.
 * A test without git, or a diff test without `Document.diff`, is skipped
   (exit 77).
 
 ## Stages
 
 1. 0.1: Stage, Unstage, the commit with its question, the diff against a
-   revision as text, `hsm-git revision` - the revision file of a diff tab.
-2. 0.2: Compare with a Revision... in a diff tab of the editor: the action
-   with `result: "diff"`, `modes` on every action, the Russian text, the
-   plugin test and the Debian `Breaks`. Needs the editor's diff tabs
-   (`EDIT-MODE-10..12`, `EDIT-PLUG-56/58`; `MODES.md` stages 4 and 5).
+   revision as text, Compare with a Revision... in a diff tab of the editor
+   (an editor with the diff tabs, `EDIT-PLUG-58`).
 
 ## Open questions
 

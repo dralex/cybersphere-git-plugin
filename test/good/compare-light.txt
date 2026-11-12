@@ -1,0 +1,17 @@
+base: HEAD
+target: light.graphml
+geometry: no
+changed: 7, added: 2, removed: 3
+meta platform: ArduinoUno -> ArduinoNano (- / -)
+state machine Light
+  state Red: color (n1 / n1)
+  state Blink: added (- / n3)
+  state Yellow: parent (n2 / n2)
+  comment: comment (c1 / c1)
+  state Green: removed (n3 / -)
+  transition Red -> Yellow [TICK]: behaviour (n1-n2 / n1-n2)
+  transition Yellow -> Red [TICK]: added (- / n2-n1)
+  transition Red -> Blink [NIGHT]: target (n1-n5 / n1-n5)
+  transition Night -> Red [DAWN]: trigger (n5-n1 / n5-n1#2)
+  transition Yellow -> Green [TICK]: removed (n2-n3 / -)
+  transition Green -> Red [TICK]: removed (n3-n1 / -)

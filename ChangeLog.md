@@ -9,13 +9,23 @@ Added:
 - the package `hsm_git` and the command `hsm-git` (`python3 -m hsm_git`):
   stage, unstage, the one-shot commit of the index, the diff of a diagram
   against a revision as text over `Document.diff` of libcyberiadamlpp-py 1.2;
-- `hsm-git revision`: the diagram of a revision written into a file, the base
-  of a diff tab of the editor - the old path of a staged rename, an empty file
-  for a diagram the revision lacks; the base of the text diff too;
 - the commit session of the editor: the branch and the staged files asked
   about, the answer the message, a changed index asked again;
 - the editor plugin `git`: Stage, Unstage, Commit... and Changes Since a
   Revision..., greyed out without git or outside a git work tree (the editor
   conditions `requires` and `git`), the Russian texts;
 - `hsm-git --install-editor-plugin [DIR]` and the Debian package
-  `python3-cybersphere-git`.
+  `python3-cybersphere-git`;
+- Compare with a Revision...: `hsm-git revision` writes the diagram as a
+  revision stores it (the old path of a staged rename, an empty file for a
+  new one) for a diff tab of the editor (`result: diff`), the text diff and
+  the tab sharing the revision file and the pairs;
+- the actions work in the HSM, FA and inspection tabs of the editor
+  (`modes`); the editor's `regionGeometry` marker is shown with the Geometry
+  option only, as the view state.
+
+Open for the release:
+- the Debian package `Breaks: cyberiada-pro (<< X)`, X the first editor
+  version with the diff tabs: the editors v1.0-pre3 and v1.0-pre4 reject the
+  plugin for its `diff` result, and they share the package version 1.0.0
+  with the current editor.
