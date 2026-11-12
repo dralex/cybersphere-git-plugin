@@ -39,7 +39,8 @@ a file of a git work tree; Stage also needs it saved. In a text tab (plain
 text, Markdown, C, C++, C#, Python) Stage, Unstage, Commit..., History and
 Changes Since a Revision... work on the text, the changes line by line; the
 compares need a diagram, in an HSM, FA or inspection tab, and an editor with
-the diff tabs.
+the diff tabs. The messages of the run follow the language of the editor
+(English, Russian).
 
 ## Installation
 

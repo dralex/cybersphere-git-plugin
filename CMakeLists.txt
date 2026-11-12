@@ -22,6 +22,7 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/hsm_git/__init__.py
               ${CMAKE_CURRENT_SOURCE_DIR}/hsm_git/actions.py
               ${CMAKE_CURRENT_SOURCE_DIR}/hsm_git/diff.py
               ${CMAKE_CURRENT_SOURCE_DIR}/hsm_git/textdiff.py
+              ${CMAKE_CURRENT_SOURCE_DIR}/hsm_git/i18n.py
               ${CMAKE_CURRENT_SOURCE_DIR}/hsm_git/session.py
               ${CMAKE_CURRENT_SOURCE_DIR}/hsm_git/plugin.py
         DESTINATION ${PYTHON_INSTALL_DIR}/hsm_git)

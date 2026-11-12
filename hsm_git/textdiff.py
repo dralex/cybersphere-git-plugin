@@ -29,6 +29,7 @@ import tempfile
 
 from hsm_git import GitError
 from hsm_git import diff
+from hsm_git.i18n import tr
 from hsm_git.repo import Repository
 
 BASE_FILE = 'revision.txt'
@@ -44,7 +45,7 @@ def lines(path):
         with open(path, 'rb') as file:
             return file.read().decode(ENCODING, 'replace').splitlines()
     except OSError as error:
-        raise GitError('the text {} is not read: {}'.format(os.path.basename(path), error)) from error
+        raise GitError(tr('the text {} is not read: {}').format(os.path.basename(path), error)) from error
 
 
 def span(first, last):

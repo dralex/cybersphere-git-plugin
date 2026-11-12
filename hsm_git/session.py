@@ -31,6 +31,7 @@ import sys
 from hsm_git import GitError, EXIT_OK, EXIT_DECLINED, EXIT_FAILED
 from hsm_git import actions
 from hsm_git import git
+from hsm_git.i18n import tr
 from hsm_git.repo import Repository
 
 METHOD_NOT_FOUND = -32601
@@ -135,18 +136,18 @@ class Session:
 
     def question(self, repo, staged):
         """The text of the question: the branch, the files, the unsaved edits."""
-        lines = ['Commit {} staged file(s) to {}? The answer is the message.'.format(len(staged), repo.branch)]
+        lines = [tr('Commit {} staged file(s) to {}? The answer is the message.').format(len(staged), repo.branch)]
         for status, path in staged[:ASK_LISTED_FILES]:
             lines.append('{}  {}'.format(status, path))
         if len(staged) > ASK_LISTED_FILES:
-            lines.append('... and {} more'.format(len(staged) - ASK_LISTED_FILES))
+            lines.append(tr('... and {} more').format(len(staged) - ASK_LISTED_FILES))
         if self.unsaved():
-            lines.append('{} has unsaved edits: they are not committed.'.format(os.path.basename(self.document)))
+            lines.append(tr('{} has unsaved edits: they are not committed.').format(os.path.basename(self.document)))
         return '\n'.join(lines)
 
     def commit(self):
         """The whole session after initialize; the exit code."""
-        self.state('running', 'reading the index')
+        self.state('running', tr('reading the index'))
         repo = Repository.locate(self.document)
         staged = actions.staged_files(repo)
         while True:
@@ -156,26 +157,26 @@ class Session:
             self.state('waiting')
             reply = self.ask(self.question(repo, staged))
             if reply.get('action') != 'accept':
-                self.log('declined: nothing is committed')
+                self.log(tr('declined: nothing is committed'))
                 return EXIT_DECLINED
             message = actions.first_line(str(reply.get('text', '')))
             if not message:
-                self.log('the message is empty', 'warning')
+                self.log(tr('the message is empty'), 'warning')
                 continue
             if repo.fingerprint() != fingerprint:
-                self.log('the index changed while asking', 'warning')
+                self.log(tr('the index changed while asking'), 'warning')
                 staged = actions.staged_files(repo)
                 continue
             break
-        self.state('running', 'committing')
+        self.state('running', tr('committing'))
         code, out, err = git.run(['commit', '-F', '-'], repo.top, stdin=actions.commit_text(message))
         for line in (git.text(out) + err).splitlines():
             self.log(line, None if code == 0 else 'error')
         if code != 0:
-            raise GitError('the commit failed')
-        head = git.text(git.output(['rev-parse', '--short', 'HEAD'], repo.top, 'the commit is not read',
+            raise GitError(tr('the commit failed'))
+        head = git.text(git.output(['rev-parse', '--short', 'HEAD'], repo.top, tr('the commit is not read'),
                                    read_only=True)).strip()
-        self.state('finished', 'committed {}'.format(head))
+        self.state('finished', tr('committed {}').format(head))
         return EXIT_OK
 
     def run(self):

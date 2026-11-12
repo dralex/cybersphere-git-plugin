@@ -29,12 +29,13 @@ import io
 import json
 import os
 import re
+import string
 import sys
 
 from testenv import Repo, report, git_found, binding_diff, write_text, SKIP, LIGHT, LIGHT_EDITED, DIAGRAM, TEST_DIR
 from testenv import NOTES, NOTES_TEXT, NOTES_EDITED, REPOSITORY
 
-from hsm_git import cli, textdiff, EXIT_OK, EXIT_USAGE, EXIT_NOTHING_STAGED, EXIT_FAILED  # pylint: disable=wrong-import-order
+from hsm_git import cli, textdiff, i18n, EXIT_OK, EXIT_USAGE, EXIT_NOTHING_STAGED, EXIT_FAILED  # pylint: disable=wrong-import-order
 
 GOOD_DIFF = os.path.join(TEST_DIR, 'good', 'diff-light.txt')
 GOOD_TEXT_DIFF = os.path.join(TEST_DIR, 'good', 'diff-text.txt')
@@ -330,6 +331,43 @@ def diffs():
     return failed
 
 
+def fields(text):
+    """The replacement fields of a format string."""
+    return [name for _, name, _, _ in string.Formatter().parse(text) if name is not None]
+
+
+def messages():
+    """The Russian messages: every text of tr() translated, no stale one, the
+    same fields; a run in Russian; the failures."""
+    failed = 0
+    used = set()
+    package = os.path.join(REPOSITORY, 'hsm_git')
+    for name in sorted(os.listdir(package)):
+        if name.endswith('.py'):
+            with open(os.path.join(package, name), encoding='utf-8') as file:
+                used.update(text for _, text in re.findall(r"""\btr\((['"])(.*?)\1\)""", file.read()))
+    catalog = i18n.CATALOGS['ru']
+    failed += report('every message translated, none stale', used == set(catalog),
+                     'missing {} stale {}'.format(sorted(used - set(catalog)), sorted(set(catalog) - used)))
+    failed += report('the translations keep the fields',
+                     all(fields(text) == fields(catalog[text]) for text in catalog),
+                     [text for text in catalog if fields(text) != fields(catalog[text])])
+    repo = Repo()
+    try:
+        document = repo.put(DIAGRAM, LIGHT)
+        repo.env[i18n.LANGUAGE_VARIABLE] = 'ru'
+        code, out, err = hsm_git(repo, 'unstage', document)
+        failed += report('a status line in Russian', code == EXIT_OK and out == 'нечего убирать из индекса\n', out + err)
+        code, out, err = hsm_git(repo, 'diff', document, '--revision=nope')
+        failed += report('a failure in Russian', code == EXIT_FAILED and "ревизия 'nope' не найдена" in err, out + err)
+        repo.env[i18n.LANGUAGE_VARIABLE] = 'en'
+        code, out, err = hsm_git(repo, 'unstage', document)
+        failed += report('the English of the batch mode', out == 'nothing to unstage\n', out + err)
+    finally:
+        repo.cleanup()
+    return failed
+
+
 def textconvs():
     """The listing of a diagram and the textconv driver of git; the failures."""
     failed = 0
@@ -369,7 +407,7 @@ def main():
     if not git_found():
         print('skipped: no git')
         return SKIP
-    failed = actions() + revisions() + indexes() + texts() + histories()
+    failed = actions() + revisions() + indexes() + texts() + histories() + messages()
     if binding_diff():
         failed += diffs() + textconvs()
     else:

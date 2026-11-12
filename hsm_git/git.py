@@ -27,6 +27,7 @@ import os
 import subprocess
 
 from hsm_git import GitError
+from hsm_git.i18n import tr
 
 GIT = 'git'
 
@@ -55,7 +56,7 @@ def run(args, cwd, stdin=None, read_only=False):
     try:
         proc = subprocess.run(command, cwd=cwd, env=environment(read_only), check=False, **streams)
     except OSError as error:
-        raise GitError('git does not start: {}'.format(error)) from error
+        raise GitError(tr('git does not start: {}').format(error)) from error
     return proc.returncode, proc.stdout, proc.stderr.decode('utf-8', 'replace')
 
 

@@ -31,6 +31,7 @@ import sys
 import tempfile
 
 from hsm_git import GitError
+from hsm_git.i18n import tr
 from hsm_git.repo import Repository
 
 WORKING = 'working'
@@ -66,9 +67,9 @@ def binding():
     try:
         import CyberiadaML  # pylint: disable=import-outside-toplevel
     except ImportError as error:
-        raise GitError('the diff needs the CyberiadaML module of python3-libcyberiadamlpp 1.2') from error
+        raise GitError(tr('the diff needs the CyberiadaML module of python3-libcyberiadamlpp 1.2')) from error
     if not hasattr(CyberiadaML.Document, 'diff'):
-        raise GitError('the diff needs python3-libcyberiadamlpp 1.2 with Document.diff')
+        raise GitError(tr('the diff needs python3-libcyberiadamlpp 1.2 with Document.diff'))
     return CyberiadaML
 
 
@@ -86,7 +87,7 @@ def load(path):
     try:
         document.open(path)
     except errors as error:
-        raise GitError('the diagram {} is not read: {}'.format(os.path.basename(path), error)) from error
+        raise GitError(tr('the diagram {} is not read: {}').format(os.path.basename(path), error)) from error
     return document
 
 
@@ -510,7 +511,7 @@ def write_findings(path, findings):
             json.dump(findings, file, ensure_ascii=False, indent=1)
             file.write('\n')
     except OSError as error:
-        raise GitError('the findings are not written: {}'.format(error)) from error
+        raise GitError(tr('the findings are not written: {}').format(error)) from error
 
 
 def base(repo, revision, out):
@@ -559,9 +560,11 @@ def write_revision(document, output, revision='HEAD', index=False):
     try:
         path, label, name = fetch(repo, revision, index, output)
     except OSError as error:
-        raise GitError('the revision file is not written: {}'.format(error)) from error
-    if path is None:
-        print('{} is not in {}'.format(repo.path, name))
+        raise GitError(tr('the revision file is not written: {}').format(error)) from error
+    if path is None and index:
+        print(tr('{} is not in the index').format(repo.path))
+    elif path is None:
+        print(tr('{} is not in {}').format(repo.path, revision))
     else:
         print('{}:{}'.format(label, path))
 

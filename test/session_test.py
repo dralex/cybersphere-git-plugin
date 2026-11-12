@@ -33,6 +33,7 @@ from testenv import Repo, report, git_found, SKIP, LIGHT, LIGHT_EDITED, DIAGRAM
 
 from hsm_git import EXIT_OK, EXIT_DECLINED, EXIT_NOTHING_STAGED  # pylint: disable=wrong-import-order
 from hsm_git.session import Session  # pylint: disable=wrong-import-order
+from hsm_git.i18n import LANGUAGE_VARIABLE  # pylint: disable=wrong-import-order
 
 INITIALIZE = {'jsonrpc': '2.0', 'id': 1, 'method': 'initialize',
               'params': {'session': 1, 'editor': '1.1.0', 'language': 'en', 'plugin': 'git',
@@ -150,6 +151,13 @@ def main():
         code, messages = drive(repo, document, [line(INITIALIZE), answer(1, 'with edits')], request)
         failed += report('the unsaved edits noted', code == EXIT_OK and
                          'light.graphml has unsaved edits: they are not committed.' in asks(messages)[0], messages)
+        repo.put(DIAGRAM, LIGHT_EDITED)
+        repo.git('add', DIAGRAM)
+        repo.env[LANGUAGE_VARIABLE] = 'ru'
+        code, messages = drive(repo, document, [line(INITIALIZE), answer(1, 'in russian')])
+        failed += report('the question in Russian', code == EXIT_OK and
+                         asks(messages)[0].startswith('Зафиксировать файлы индекса (1) в main?') and
+                         messages[-1]['params']['text'].startswith('зафиксировано: '), messages)
     finally:
         repo.cleanup()
     return 1 if failed else 0

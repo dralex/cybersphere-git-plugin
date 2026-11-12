@@ -27,6 +27,7 @@ import sys
 
 from hsm_git import GitError, EXIT_NOTHING_STAGED, EXIT_USAGE
 from hsm_git import git
+from hsm_git.i18n import tr
 from hsm_git.repo import Repository
 
 HISTORY_COUNT = 30
@@ -36,13 +37,13 @@ HISTORY_SEPARATOR = '  '
 def status_line(repo):
     """The status of the file after an action."""
     line = repo.status()
-    return line if line else '{} has no changes'.format(repo.path)
+    return line if line else tr('{} has no changes').format(repo.path)
 
 
 def stage(document):
     """git add of the saved diagram."""
     repo = Repository.locate(document)
-    git.output(['add', '--', repo.path], repo.top, '{} is not staged'.format(repo.path))
+    git.output(['add', '--', repo.path], repo.top, tr('{} is not staged').format(repo.path))
     print(status_line(repo))
 
 
@@ -51,13 +52,13 @@ def unstage(document):
     there is no HEAD to restore from."""
     repo = Repository.locate(document)
     if not repo.has_staged_change():
-        print('nothing to unstage')
+        print(tr('nothing to unstage'))
         return
     if repo.has_commits:
         args = ['restore', '--staged', '--', repo.path]
     else:
         args = ['rm', '--cached', '-q', '--', repo.path]
-    git.output(args, repo.top, '{} is not unstaged'.format(repo.path))
+    git.output(args, repo.top, tr('{} is not unstaged').format(repo.path))
     print(status_line(repo))
 
 
@@ -73,7 +74,7 @@ def staged_files(repo):
     """The staged changes of the index; nothing staged is a failure."""
     staged = repo.staged()
     if not staged:
-        raise GitError('nothing is staged: stage the files first', EXIT_NOTHING_STAGED)
+        raise GitError(tr('nothing is staged: stage the files first'), EXIT_NOTHING_STAGED)
     return staged
 
 
@@ -89,15 +90,15 @@ def commit(document, message_file):
         with open(message_file, encoding='utf-8') as file:
             message = first_line(file.read())
     except OSError as error:
-        raise GitError('the message is not read: {}'.format(error), EXIT_USAGE) from error
+        raise GitError(tr('the message is not read: {}').format(error), EXIT_USAGE) from error
     if not message:
-        raise GitError('the commit message is empty', EXIT_USAGE)
+        raise GitError(tr('the commit message is empty'), EXIT_USAGE)
     staged = staged_files(repo)
-    print('Committing {} staged file(s) to {}:'.format(len(staged), repo.branch))
+    print(tr('Committing {} staged file(s) to {}:').format(len(staged), repo.branch))
     for status, path in staged:
         print('  {}  {}'.format(status, path))
     sys.stdout.flush()
-    out = git.output(['commit', '-F', '-'], repo.top, 'the commit failed', stdin=commit_text(message))
+    out = git.output(['commit', '-F', '-'], repo.top, tr('the commit failed'), stdin=commit_text(message))
     sys.stdout.write(git.text(out))
 
 
@@ -106,6 +107,6 @@ def history(document, count=HISTORY_COUNT):
     repo = Repository.locate(document)
     commits = repo.history(count)
     if not commits:
-        print('{} has no commits'.format(repo.path))
+        print(tr('{} has no commits').format(repo.path))
     for commit in commits:
         print(HISTORY_SEPARATOR.join(commit))
