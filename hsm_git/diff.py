@@ -83,8 +83,8 @@ def load(path):
     try:
         document.open(path)
     except Exception as error:
-        # the exceptions of the binding (XMLException, FormatException, ...) do
-        # not derive from its Exception: they are told by their module
+        # a binding before 1.2.0 derives its exceptions (XMLException, ...)
+        # from the builtin Exception, not from its own: told by their module
         if type(error).__module__ != cml.__name__:
             raise
         raise GitError(tr('the diagram {} is not read: {}').format(os.path.basename(path), error)) from error

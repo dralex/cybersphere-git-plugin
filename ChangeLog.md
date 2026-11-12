@@ -36,8 +36,9 @@ Added:
   history`);
 - `hsm-git textconv`: the textconv driver of git, `git diff` and `git log -p`
   show a diagram by its elements;
-- a diagram the library cannot read fails the diff with one line: the
-  exceptions of the binding do not derive from `CyberiadaML.Exception`;
+- a diagram the library cannot read fails the diff with one line, with any
+  binding: before 1.2.0 its exceptions do not derive from
+  `CyberiadaML.Exception`;
 - the messages of the run in Russian when the editor speaks Russian
   (`CYBERIADA_PRO_LANGUAGE`); the text of a diff stays English.
 
