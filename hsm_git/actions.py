@@ -108,5 +108,5 @@ def history(document, count=HISTORY_COUNT):
     commits = repo.history(count)
     if not commits:
         print(tr('{} has no commits').format(repo.path))
-    for commit in commits:
-        print(HISTORY_SEPARATOR.join(commit))
+    for entry in commits:
+        print(HISTORY_SEPARATOR.join(entry))

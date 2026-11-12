@@ -80,13 +80,13 @@ def load(path):
     if path is None or not os.path.exists(path) or os.path.getsize(path) == 0:
         return cml.Document()
     document = cml.LocalDocument()
-    # the exceptions of the binding (XMLException, FormatException, ...) do not
-    # derive from its Exception: catch them all
-    errors = tuple(value for value in vars(cml).values()
-                   if isinstance(value, type) and issubclass(value, BaseException))
     try:
         document.open(path)
-    except errors as error:
+    except Exception as error:
+        # the exceptions of the binding (XMLException, FormatException, ...) do
+        # not derive from its Exception: they are told by their module
+        if type(error).__module__ != cml.__name__:
+            raise
         raise GitError(tr('the diagram {} is not read: {}').format(os.path.basename(path), error)) from error
     return document
 
@@ -450,9 +450,9 @@ class Writer:
         self.changed(None, ('meta', 'meta'), names)
 
 
-def text(old, new, result, revision, geometry=False, findings=None):
-    """The lines of the diff of two documents after the header: the elements
-    and the summary; the findings are appended to the list findings."""
+def changes(old, new, result, revision, geometry=False):
+    """The lines of the diff of two documents after the header - the elements
+    and the summary - and their findings."""
     cml = binding()
     ids1 = [e.first for m in result.machines for e in m.elements if e.first]
     ids2 = [e.second for m in result.machines for e in m.elements if e.second]
@@ -469,9 +469,13 @@ def text(old, new, result, revision, geometry=False, findings=None):
                                                                   out.counts[REMOVED]))
     else:
         out.lines.append('no changes since {}'.format(revision))
-    if findings is not None:
-        findings.extend(out.findings)
-    return out.lines
+    return out.lines, out.findings
+
+
+def text(old, new, result, revision, geometry=False):
+    """The lines of the diff of two documents after the header: the elements
+    and the summary."""
+    return changes(old, new, result, revision, geometry)[0]
 
 
 def listing(document):
@@ -538,30 +542,31 @@ def base_index(repo, out):
     return path
 
 
-def fetch(repo, revision, index, out):
-    """Write the base of a diff into out - the revision, or the index; return
-    its path (None without the file), its label and its name."""
-    if index:
+def fetch(repo, revision, out):
+    """Write the base of a diff into out - the revision, or the index when it
+    is None; return its path (None without the file), its label and its name."""
+    if revision is None:
         return base_index(repo, out), INDEX, INDEX_NAME
     return base(repo, revision, out), revision, revision
 
 
-def header(repo, path, label, name):
+def header_line(repo, path, label, name):
     """The first line of a diff."""
     if path is None:
         return '--- {} ({} is not in {})'.format(NO_FILE, repo.path, name)
     return '--- {}:{}'.format(label, path)
 
 
-def write_revision(document, output, revision='HEAD', index=False):
-    """Write the diagram as the revision or the index has it into output, the
-    base of a diff tab of the editor (docs/ARCHITECTURE.md, The compare)."""
+def write_revision(document, output, revision='HEAD'):
+    """Write the diagram as the revision - the index when it is None - has it
+    into output, the base of a diff tab of the editor (docs/ARCHITECTURE.md,
+    The compare)."""
     repo = Repository.locate(document)
     try:
-        path, label, name = fetch(repo, revision, index, output)
+        path, label, _ = fetch(repo, revision, output)
     except OSError as error:
         raise GitError(tr('the revision file is not written: {}').format(error)) from error
-    if path is None and index:
+    if path is None and revision is None:
         print(tr('{} is not in the index').format(repo.path))
     elif path is None:
         print(tr('{} is not in {}').format(repo.path, revision))
@@ -569,21 +574,20 @@ def write_revision(document, output, revision='HEAD', index=False):
         print('{}:{}'.format(label, path))
 
 
-def run(document, current=None, revision='HEAD', geometry=False, diagnostics=None, index=False):
+def run(document, current=None, revision='HEAD', geometry=False, diagnostics=None):
     """Print the changes of the diagram (the file, or current: the editor's
-    copy) since the revision or against the index; write their findings into
-    diagnostics."""
+    copy) since the revision - against the index when it is None; write their
+    findings into diagnostics."""
     binding()
     repo = Repository.locate(document)
     with tempfile.TemporaryDirectory() as tmp:
         blob = os.path.join(tmp, REVISION_FILE)
-        path, label, name = fetch(repo, revision, index, blob)
-        print(header(repo, path, label, name))
+        path, label, name = fetch(repo, revision, blob)
+        print(header_line(repo, path, label, name))
         print('+++ ' + WORKING)
         old = load(blob)
         new = load(current if current is not None else document)
-        findings = []
-        for line in text(old, new, compare(old, new, geometry), name, geometry, findings):
-            print(line)
+        lines, findings = changes(old, new, compare(old, new, geometry), name, geometry)
+        print('\n'.join(lines))
     if diagnostics is not None:
         write_findings(diagnostics, findings)

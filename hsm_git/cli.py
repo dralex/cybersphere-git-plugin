@@ -49,6 +49,11 @@ def base_of(command):
     which.add_argument('--index', action='store_true', help='the index instead of a revision')
 
 
+def revision_of(args):
+    """The base of a diff: the revision, None for the index."""
+    return None if args.index else args.revision
+
+
 def parser():
     """The arguments of hsm-git."""
     main_parser = argparse.ArgumentParser(
@@ -115,16 +120,16 @@ def run(args):
     elif args.command == 'diff':
         from hsm_git import diff  # pylint: disable=import-outside-toplevel
         if diff.is_diagram(args.current or args.document):
-            diff.run(args.document, args.current, args.revision, args.geometry, args.diagnostics, args.index)
+            diff.run(args.document, args.current, revision_of(args), args.geometry, args.diagnostics)
         else:
             from hsm_git import textdiff  # pylint: disable=import-outside-toplevel
-            textdiff.run(args.document, args.current, args.revision, args.diagnostics, args.index)
+            textdiff.run(args.document, args.current, revision_of(args), args.diagnostics)
     elif args.command == 'textconv':
         from hsm_git import diff  # pylint: disable=import-outside-toplevel
         diff.textconv(args.document)
     elif args.command == 'revision':
         from hsm_git import diff  # pylint: disable=import-outside-toplevel
-        diff.write_revision(args.document, args.output, args.revision, args.index)
+        diff.write_revision(args.document, args.output, revision_of(args))
     return EXIT_OK
 
 

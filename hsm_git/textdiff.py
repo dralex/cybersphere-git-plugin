@@ -89,17 +89,17 @@ def text(old, new, revision, findings=None):
     return out
 
 
-def run(document, current=None, revision='HEAD', diagnostics=None, index=False):
+def run(document, current=None, revision='HEAD', diagnostics=None):
     """Print the changed lines of the text (the file, or current: the editor's
-    copy) since the revision or against the index; write their findings into
-    diagnostics."""
+    copy) since the revision - against the index when it is None; write their
+    findings into diagnostics."""
     repo = Repository.locate(document)
     with tempfile.TemporaryDirectory() as tmp:
         blob = os.path.join(tmp, BASE_FILE)
-        path, label, name = diff.fetch(repo, revision, index, blob)
+        path, label, name = diff.fetch(repo, revision, blob)
         old = lines(blob)
     new = lines(current if current is not None else document)
-    print(diff.header(repo, path, label, name))
+    print(diff.header_line(repo, path, label, name))
     print('+++ ' + diff.WORKING)
     findings = []
     for line in text(old, new, name, findings):

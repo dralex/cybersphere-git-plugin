@@ -350,8 +350,8 @@ def messages():
     failed += report('every message translated, none stale', used == set(catalog),
                      'missing {} stale {}'.format(sorted(used - set(catalog)), sorted(set(catalog) - used)))
     failed += report('the translations keep the fields',
-                     all(fields(text) == fields(catalog[text]) for text in catalog),
-                     [text for text in catalog if fields(text) != fields(catalog[text])])
+                     all(fields(text) == fields(russian) for text, russian in catalog.items()),
+                     [text for text, russian in catalog.items() if fields(text) != fields(russian)])
     repo = Repo()
     try:
         document = repo.put(DIAGRAM, LIGHT)

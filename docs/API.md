@@ -239,13 +239,15 @@ before the question with exit 3.
   `out`, empty when it is not there; returns its path in the repository, or
   `None`. The base of both `diff` and `revision`; needs no `CyberiadaML`.
 * `base_index(repo, out)` - the same for the index.
+* `fetch(repo, revision, out)` - `base` or, for a `None` revision,
+  `base_index`; returns the path, the label and the name of the base.
 * `load(path)` - the document of a file in any format the library reads; a
   missing or empty file is an empty document.
 * `compare(old, new, geometry=False)` - the `CyberiadaML.DocumentDiff` of two
   documents.
-* `text(old, new, result, revision, geometry=False, findings=None)` - the
-  lines of the diff after its header: the elements and the summary; the
-  findings are appended to the list `findings` when it is given.
+* `changes(old, new, result, revision, geometry=False)` - the lines of the
+  diff after its header (the elements and the summary) and its findings.
+* `text(old, new, result, revision, geometry=False)` - the lines only.
 * `listing(document)` - the lines of the listing of a document.
 
 ### `hsm_git.textdiff`
