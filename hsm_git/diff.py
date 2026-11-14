@@ -97,9 +97,11 @@ def compare(old, new, geometry=False):
 
 
 def multiline(prefix, value):
-    """A text of several lines continued under its first line."""
-    lines = (value or '').splitlines() or ['']
-    return [prefix + lines[0]] + [' ' * len(prefix) + line for line in lines[1:]]
+    """A text of several lines continued under its first line, a prefix of
+    several lines (a guard written over lines) too."""
+    lines = (prefix + (value or '')).splitlines() or ['']
+    indent = ' ' * len(prefix.splitlines()[0] if '\n' in prefix else prefix)
+    return [lines[0]] + [indent + line for line in lines[1:]]
 
 
 def number(value):
@@ -232,7 +234,7 @@ class Side:
         action = transition.get_action() if transition.has_action() else None
         if action is not None:
             if action.get_guard():
-                items.append(['guard: ' + action.get_guard()])
+                items.append(multiline('guard: ', action.get_guard()))
             if action.get_behavior():
                 items.append(multiline('do: ', action.get_behavior()))
             if action.has_propagation():

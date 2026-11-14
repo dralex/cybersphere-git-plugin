@@ -40,7 +40,8 @@ Added:
   binding: before 1.2.0 its exceptions do not derive from
   `CyberiadaML.Exception`;
 - the messages of the run in Russian when the editor speaks Russian
-  (`CYBERIADA_PRO_LANGUAGE`); the text of a diff stays English.
+  (`CYBERIADA_PRO_LANGUAGE`); the text of a diff stays English;
+- a guard written over lines continues under its mark in the text of a diff.
 
 Open for the release:
 - the Debian package `Breaks: cyberiada-pro (<< X)`, X the first editor

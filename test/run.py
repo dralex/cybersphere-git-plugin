@@ -331,6 +331,31 @@ def diffs():
     return failed
 
 
+def guards():
+    """A guard written over lines keeps the marks of the diff; the failures."""
+    failed = 0
+    repo = Repo()
+    try:
+        with open(LIGHT, encoding='utf-8') as file:
+            light = file.read()
+        base = light.replace('NIGHT/\n', 'NIGHT [dark()]/\n', 1).replace(
+            'led.on(RED)\n', 'led.on(RED)\n\nTICK [ready()]/\nblink()\n', 1)
+        document = write_text(repo.path(DIAGRAM), base)
+        repo.commit()
+        write_text(document, base.replace('[dark()]', '[sensor-&gt;\ndark()]', 1).replace(
+            '[ready()]', '[led-&gt;\nready()]', 1))
+        code, out, err = hsm_git(repo, 'diff', document)
+        body = out.splitlines()[2:-1]
+        failed += report('a guard over lines continued under its mark', code == EXIT_OK and
+                         all(line[:2] in ('- ', '+ ', '  ') for line in body) and
+                         '+   guard: sensor->' in body and any(line.startswith('+') and
+                                                              line.endswith(' dark()') for line in body) and
+                         '+   TICK [led->' in body, out + err)
+    finally:
+        repo.cleanup()
+    return failed
+
+
 def fields(text):
     """The replacement fields of a format string."""
     return [name for _, name, _, _ in string.Formatter().parse(text) if name is not None]
@@ -409,7 +434,7 @@ def main():
         return SKIP
     failed = actions() + revisions() + indexes() + texts() + histories() + messages()
     if binding_diff():
-        failed += diffs() + textconvs()
+        failed += diffs() + guards() + textconvs()
     else:
         print('skipped the diff: no CyberiadaML with Document.diff')
     return 1 if failed else 0
