@@ -1,6 +1,6 @@
 # The CyberiadaPro Git Plugin Interface Specification
 
-Document version: 0.4 (2026-11-12)
+Document version: 0.5 (2026-11-14)
 
 The interface of `hsm_git`: the command line the editor plugin runs, its exit
 codes, the text of a diff of a diagram and of a text, the findings, the
@@ -40,10 +40,10 @@ git runs in its directory.
   editor's own metainformation (the view state, the `regionGeometry` marker)
   of a diagram, left out without it as in the editor's diff tab.
   `--diagnostics FILE` also writes the changes as findings (The findings).
-* `revision` - writes the diagram as the revision (`HEAD` by default) stored
-  it into FILE, the editor's `${output}` of a `diff` result: the old path of a
-  staged rename, an empty FILE when the diagram is not in the revision (or
-  the repository has no commit yet); prints `<revision>:<path>`, or
+* `revision` - writes the diagram or the text as the revision (`HEAD` by
+  default) stored it into FILE, the editor's `${output}` of a `diff` result:
+  the old path of a staged rename, an empty FILE when the file is not in the
+  revision (or the repository has no commit yet); prints `<revision>:<path>`, or
   `<path> is not in <revision>`. `--index` writes the staged file instead:
   `index:<path>`, or `<path> is not in the index`; an unmerged file fails.
   Needs no `CyberiadaML`.

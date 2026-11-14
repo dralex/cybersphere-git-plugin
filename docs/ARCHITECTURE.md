@@ -1,6 +1,6 @@
 # The CyberiadaPro Git Plugin Architecture
 
-Document version: 0.4 (2026-11-12)
+Document version: 0.5 (2026-11-14)
 
 The plugin brings the git repository of the open diagram into the CyberiadaPro
 editor: it stages and unstages the diagram, commits the index after showing
@@ -66,7 +66,7 @@ the textconv only) and the Python 3 standard library.
 | R8 | Show the same changes on the canvas: a diff tab of the editor, the revision against the diagram with its unsaved edits. | The compare |
 | R9 | Link each change to the element of the edited diagram, or to the line of a text: a click in the Diagnostics of the editor goes there. | The findings |
 | R10 | Compare with the index, as text and in a diff tab: what the commit takes against the edits. | The index |
-| R11 | Stage, unstage, commit, the history and a line diff for the texts of the text tabs of the editor. | Text tabs |
+| R11 | Stage, unstage, commit, the history, a line diff and the compares in a text diff tab for the texts of the text tabs of the editor. | Text tabs |
 | R12 | Show the commits of the file, a rename followed. | The history |
 | R13 | Show the diagrams by their elements in `git diff` and `git log -p` on the command line. | The textconv |
 | R14 | Write the messages of the run in the language of the editor: English, Russian. | The messages |
@@ -259,8 +259,12 @@ diff.
 * The lines are compared without their line ends; the base is read as UTF-8,
   an undecodable byte replaced.
 * A text diff needs no `CyberiadaML`.
-* The compares stay diagram-only: the editor accepts a `diff` result only in
-  the diagram modes (`EDIT-PLUG-58`).
+* Compare with a Revision... and Compare with the Index work in the text tabs
+  too: `hsm-git revision` writes the text of the revision as it writes a
+  diagram (the bytes of the blob), and the editor opens a text diff tab
+  (`EDIT-MODE-19`, `EDIT-PLUG-58`), pairing the lines with its own line diff.
+  An editor before the text diff tabs rejects the plugin for that, so the
+  package needs one with them.
 * The modes of the languages a plugin brings are not listed: `modes` has no
   wildcard, and their ids are not known in advance.
 
