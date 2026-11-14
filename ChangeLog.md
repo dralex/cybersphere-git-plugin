@@ -41,10 +41,14 @@ Added:
   `CyberiadaML.Exception`;
 - the messages of the run in Russian when the editor speaks Russian
   (`CYBERIADA_PRO_LANGUAGE`); the text of a diff stays English;
-- a guard written over lines continues under its mark in the text of a diff.
+- a guard written over lines continues under its mark in the text of a diff;
+- Compare with a Revision... and Compare with the Index in the text tabs: the
+  text of the revision or of the index as the base of a text diff tab of the
+  editor (`EDIT-MODE-19`, `EDIT-PLUG-58`).
 
 Open for the release:
 - the Debian package `Breaks: cyberiada-pro (<< X)`, X the first editor
-  version with the diff tabs: the editors v1.0-pre3 and v1.0-pre4 reject the
-  plugin for its `diff` result, and they share the package version 1.0.0
-  with the current editor.
+  version with the text diff tabs: the editors v1.0-pre3 and v1.0-pre4 reject
+  the plugin for its `diff` result, the later ones before the text diff tabs
+  for a `diff` action in a text mode, and they share the package version
+  1.0.0 with the current editor.

@@ -182,8 +182,8 @@ def compare_part(binary, env, repo, document):
 
 
 def text_part(binary, env, repo):
-    """A Markdown file in a text tab: staged, its line diff and findings, no
-    compare; the failures."""
+    """A Markdown file in a text tab: staged, its line diff and findings, its
+    compares in a text diff tab; the failures."""
     failed = 0
     notes = write_text(repo.path(NOTES), NOTES_TEXT)
     run = ['--plugin-path', '.', '--run-plugin']
@@ -198,8 +198,15 @@ def text_part(binary, env, repo):
     code, out = batch(binary, env, notes, *run, PLUGIN + ':diff', '--dump-plugin')
     failed += report('the line diff of a text and its findings', code == 0 and '  +the light blinks' in out and
                      'info changed - line 3: lines 3-4 changed' in section(out, 'diagnostics'), out)
-    code, out = batch(binary, env, notes, *run, PLUGIN + ':compare', '--dump-plugin')
-    failed += report('no compare of a text', code != 0 and 'the action works in: HSM diagram' in out, out)
+    code, out = batch(binary, env, notes, *run, PLUGIN + ':compare', '--dump', '--dump-tabs')
+    diff = section(out, 'text diff')
+    failed += report('the compare of a text in a text diff tab', code == 0 and
+                     '1 notes.md \u2194 HEAD text-diff active' in section(out, 'tabs') and
+                     '3 3 ~ the light is red | the light blinks' in diff and '. 4 + at night' in diff, out)
+    code, out = batch(binary, env, notes, *run, PLUGIN + ':compare-index', '--dump')
+    failed += report('the compare of a text with the index', code == 0 and
+                     'base: Compare with the Index' in section(out, 'text diff') and
+                     '. 4 + at night' in section(out, 'text diff'), out)
     return failed
 
 

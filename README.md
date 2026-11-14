@@ -30,16 +30,15 @@ Plugins > Git:
 | Unstage | takes the diagram out of the index, the file kept |
 | Commit... | lists the branch and the staged files, asks the message, commits the whole index |
 | Changes Since a Revision... | prints the changed states, transitions, comments and metadata since the revision (`HEAD` by default); the Diagnostics dock lists them, a click selects the element |
-| Compare with a Revision... | opens a diff tab: the revision and the diagram with its unsaved edits side by side, the changes marked; Document > Refresh compares again |
-| Compare with the Index | the same diff tab with the staged diagram as the base: what the commit takes against the edits |
+| Compare with a Revision... | opens a diff tab: the revision and the diagram or the text with its unsaved edits side by side, the changes marked; Document > Refresh compares again |
+| Compare with the Index | the same diff tab with the staged file as the base: what the commit takes against the edits |
 | History | the last commits of the file, a rename followed: the revisions to compare with |
 
 The editor greys the actions out unless git is installed and the document is
 a file of a git work tree; Stage also needs it saved. In a text tab (plain
-text, Markdown, C, C++, C#, Python) Stage, Unstage, Commit..., History and
-Changes Since a Revision... work on the text, the changes line by line; the
-compares need a diagram, in an HSM, FA or inspection tab, and an editor with
-the diff tabs. The messages of the run follow the language of the editor
+text, Markdown, C, C++, C#, Python) every action works on the text, the
+changes line by line; its compares open a text diff tab, two columns line by
+line, and need an editor with the text diff tabs. The messages of the run follow the language of the editor
 (English, Russian).
 
 ## Installation
