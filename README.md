@@ -1,5 +1,11 @@
 # CyberiadaPro git plugin
 
+**Superseded.** git is a part of CyberiadaPro itself since its specification 0.80 (the
+Repository and History docks, the Git menu, the commit, the compares, the branches: `docs/GIT.md`
+of CyberiadaHSM-Editor), and the textconv driver of this plugin is `cybparser listing` of
+libcyberiadaml (`git config diff.cyberiada.textconv "cybparser listing"`, the same text). The
+plugin is no longer built nor installed with the editor; its last release is 0.1.0.
+
 The git plugin of CyberiadaPro, the Cyberiada HSM diagram editor: it stages
 and unstages the open diagram, commits the index after showing the branch and
 the staged files, and shows what changed in the diagram since a revision -
